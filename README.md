@@ -17,7 +17,7 @@ pstack ships for Cursor, and [pstack-claude](https://github.com/michael-denyer/p
 | pstack switches on at the start of every session | Copilot ignores the plain text the startup hook prints, so pstack never switches on |
 | The skills load as `pstack:poteto-mode`, `pstack:tdd`, ... | Copilot answers "Skill not found" to the `pstack:` prefix |
 | Skills call `Agent`, `Skill`, `AskUserQuestion`, `TodoWrite` | Copilot's tools are named `task`, `skill`, `ask_user`, `update_todo` |
-| `pstack:poteto-agent` handles delegated work | VS Code never loads plugin agents, so every dispatch to it is rejected |
+| `pstack:poteto-agent` handles delegated work | VS Code rejects every dispatch to it, and its agents window lists each plugin agent twice |
 
 This port fixes all four and leaves pstack's own content untouched. Each fix is checked against the real Copilot runtime, both the Copilot CLI and the copy bundled inside VS Code. The plugin as pstack-claude ships it, unchanged, fails three of those checks.
 
@@ -101,7 +101,7 @@ flowchart LR
 - **A startup hook that Copilot reads.** It prints the poteto-mode instructions as JSON with an `additionalContext` field, the only hook output Copilot injects.
 - **A Copilot tool map.** [`copilot-tools.md`](overlay/skills/poteto-mode/references/copilot-tools.md) translates every Claude tool and model name the skills use. `poteto-mode` points Copilot at it.
 - **Bare skill names** in the startup instructions, such as `poteto-mode` rather than `pstack:poteto-mode`.
-- **An agent fallback.** Where `task` doesn't list pstack's agents, as in VS Code, Copilot dispatches its built-in `general-purpose` agent and has it load `poteto-mode` first. That's all `pstack:poteto-agent` does.
+- **No plugin agents.** Copilot dispatches its built-in `general-purpose` agent and has it load `poteto-mode` first, which is all `pstack:poteto-agent` does. Shipping no agents also keeps VS Code's agent picker free of duplicates.
 - **A Copilot-only manifest.** VS Code treats any plugin with a `.claude-plugin/` folder as a Claude plugin, so the port ships only a Copilot `plugin.json`.
 
 Tested on VS Code 1.140.0 and its bundled Copilot runtime, and on Copilot CLI 1.0.91. Updating to a newer pstack, the generated files, and the live tests are covered in [docs/maintaining.md](docs/maintaining.md).

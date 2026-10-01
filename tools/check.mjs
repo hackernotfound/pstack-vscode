@@ -23,7 +23,7 @@ const upstream = JSON.parse(readFileSync(join(root, 'upstream.json'), 'utf8'));
 check('plugin.json name is pstack', plugin.name === 'pstack');
 check('plugin.json version tracks upstream', plugin.version === `${upstream.version}-copilot.${upstream.portRevision}`);
 check('no .claude-plugin manifest (VS Code would parse it as Claude format)', !existsSync(join(out, '.claude-plugin')));
-check('every listed agent exists', plugin.agents.every((a) => existsSync(join(out, a))));
+check('plugin ships no agents (the VS Code agents window lists each plugin agent twice)', !('agents' in plugin) && !existsSync(join(out, 'agents')) && !readdirSync(out, { recursive: true }).some((rel) => /(^|\/)agents\/[^/]+\.md$/.test(rel) && !rel.startsWith('skills/')));
 check('hooks file exists', existsSync(join(out, plugin.hooks)));
 
 const market = JSON.parse(readFileSync(join(root, '.github/plugin/marketplace.json'), 'utf8'));

@@ -13,5 +13,5 @@ When the intent is already specific, enter that skill directly: `tdd`, `architec
 
 User instructions (CLAUDE.md, AGENTS.md, direct requests) take precedence. Other session-start mandates, such as superpowers, still apply. Their skill checks run as before, and when a task meets the criteria above they route implementation through poteto-mode.
 
-On GitHub Copilot, skills load through the `skill` tool by bare name, such as `poteto-mode`. Only agents carry the `pstack:` prefix, such as `pstack:poteto-agent`; when `task` does not list them, use the fallback in copilot-tools.md. When a pstack skill names a Claude tool or model, read the pstack plugin's `skills/poteto-mode/references/copilot-tools.md`.
+On GitHub Copilot, skills load through the `skill` tool by bare name, such as `poteto-mode`. This plugin ships no agents; where a skill names a pstack agent, dispatch `general-purpose` as copilot-tools.md says. When a pstack skill names a Claude tool or model, read the pstack plugin's `skills/poteto-mode/references/copilot-tools.md`.
 </EXTREMELY_IMPORTANT>

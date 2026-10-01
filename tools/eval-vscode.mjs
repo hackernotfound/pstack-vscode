@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 // Live checks against the Copilot SDK runtime that VS Code's agents window runs
 // for its Copilot target, configured the way copilotSessionLauncher.ts configures it.
-// Same checks as tools/eval.sh. Plugin agents are reported as INFO because VS Code passes
-// on-disk plugins without their agents. Needs VS Code >= 1.140, `gh`, and `git`.
+// Same checks as tools/eval.sh. Needs VS Code >= 1.140, `gh`, and `git`.
 // Local only: it hands your gh token to an auto-approved session. Never run it in CI.
 import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -109,14 +108,13 @@ function check(label, ok) {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}`);
   if (!ok) fail = 1;
 }
-const info = (label, ok) => console.log(`INFO  ${label}: ${ok ? 'yes' : 'no'}`);
 const pstackSkills = new Set(readdirSync(join(plugin, 'skills')));
 const subagentRanPstack = (cs) => cs.some((t) => t.t === 'task' && t.ok && cs.some((c) => c.parent === t.id && c.t === 'skill' && pstackSkills.has(String(c.a.skill)) && c.ok));
 const rejectedDispatch = (cs) => cs.some((t) => t.t === 'task' && !t.ok);
 
 const agentNames = await run('context', 'Do not run tools. 1) Quote verbatim the sentence in your context that starts with "On GitHub Copilot, skills load". 2) Print the full enum of the agent_type parameter of your task tool, comma separated. 3) Print the number of skills available to you whose name starts with "principle-".', 5 * 60_000);
 check('mandate injected by sessionStart hook', final('context').includes('skills load through the'));
-info('runtime loaded pstack plugin agents (VS Code passes on-disk plugins without agents)', agentNames.includes('pstack:poteto-agent'));
+check('runtime lists no pstack plugin agents', !agentNames.some((n) => n.startsWith('pstack:')));
 
 await run('route', 'Explain how main.js gets its output in this repo. Use poteto-mode, and delegate the code reading to one pstack subagent.', 20 * 60_000);
 const route = calls('route');

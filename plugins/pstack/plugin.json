@@ -16,10 +16,6 @@
     "skills",
     "subagents"
   ],
-  "agents": [
-    "./agents/comment-sicko.md",
-    "./agents/poteto-agent.md"
-  ],
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }
