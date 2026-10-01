@@ -6,7 +6,8 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const upstream = JSON.parse(readFileSync(join(root, 'upstream.json'), 'utf8'));
-const version = `${upstream.version}-copilot.${upstream.portRevision}`;
+const version = readFileSync(join(root, 'VERSION'), 'utf8').trim();
+if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error(`VERSION must be MAJOR.MINOR.PATCH, got ${JSON.stringify(version)}`);
 const out = join(root, 'plugins/pstack');
 
 function fetchSource() {
