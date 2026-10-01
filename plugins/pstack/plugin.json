@@ -1,0 +1,35 @@
+{
+  "name": "pstack",
+  "displayName": "pstack (GitHub Copilot port)",
+  "version": "0.9.57-copilot.1",
+  "description": "if you want to go fast, go deep first. pstack helps you write less, but higher quality code. rigorous agent workflows you can parallelize with confidence. GitHub Copilot port of pstack-claude 0.9.57. Original pstack by Lauren Tan (poteto); Claude Code port by Michael Denyer.",
+  "author": {
+    "name": "hackernotfound",
+    "url": "https://github.com/hackernotfound"
+  },
+  "license": "MIT",
+  "keywords": [
+    "pstack",
+    "poteto-mode",
+    "copilot",
+    "vscode",
+    "skills",
+    "subagents"
+  ],
+  "agents": [
+    "./agents/comment-sicko.md",
+    "./agents/poteto-agent.md",
+    "./effort-agents/effort-high.md",
+    "./effort-agents/effort-low.md",
+    "./effort-agents/effort-max.md",
+    "./effort-agents/effort-medium.md",
+    "./effort-agents/effort-xhigh.md",
+    "./effort-agents/poteto-agent-high.md",
+    "./effort-agents/poteto-agent-low.md",
+    "./effort-agents/poteto-agent-max.md",
+    "./effort-agents/poteto-agent-medium.md",
+    "./effort-agents/poteto-agent-xhigh.md"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json"
+}
