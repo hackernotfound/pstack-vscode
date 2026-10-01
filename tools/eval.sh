@@ -22,6 +22,13 @@ run() {
 
 final() { jq -r 'select(.type=="assistant.message") | .data.content // empty' "$work/$1.jsonl"; }
 calls() { jq -c 'select(.type=="tool.execution_start") | .data | {t: .toolName, a: .arguments}' "$work/$1.jsonl"; }
+poteto_mode_loaded() {
+  jq -s -e '
+    (map(select(.type=="tool.execution_complete" and .data.success==true) | .data.toolCallId)) as $ok
+    | any(.[] | select(.type=="tool.execution_start") | .data; . as $c | $c.toolName=="skill"
+        and (($c.arguments | objects | .skill // "") | test("poteto-mode")) and ($ok | index([$c.toolCallId])))
+  ' "$work/$1.jsonl" > /dev/null
+}
 subagent_in_poteto_mode() {
   jq -s -e '
     (map(select(.type=="tool.execution_complete" and .data.success==true) | .data.toolCallId)) as $ok
@@ -47,13 +54,13 @@ check "pstack:poteto-agent dispatchable" 'final context | grep -q "pstack:poteto
 check "pstack:comment-sicko dispatchable" 'final context | grep -q "pstack:comment-sicko"'
 
 run route -p 'Explain how main.js gets its output in this repo. Use poteto-mode, and delegate the code reading to one pstack subagent.'
-check "poteto-mode loaded via skill tool" 'calls route | grep -q "\"t\":\"skill\".*poteto-mode"'
+check "poteto-mode loaded via skill tool" 'poteto_mode_loaded route'
 check "no namespaced skill lookups" '! calls route | grep -q "\"skill\":\"pstack:"'
 check "a subagent ran and loaded poteto-mode itself" 'subagent_in_poteto_mode route'
 check "no Claude-only tool names called" '! calls route | grep -qE "\"t\":\"(Agent|Skill|Task|AskUserQuestion|TodoWrite)\""'
 
 run auto -p 'Rename the function add to sum everywhere in this repo, keep main.js printing 5, and verify it by running it.'
-check "mandate routes a multi-file change into poteto-mode unprompted" 'calls auto | grep -q "\"t\":\"skill\".*poteto-mode"'
+check "mandate routes a multi-file change into poteto-mode unprompted" 'poteto_mode_loaded auto'
 check "copilot-tools.md read during a pstack run" 'cat "$work/route.jsonl" "$work/auto.jsonl" | jq -r "select(.type==\"tool.execution_start\") | .data.arguments | objects | .path // empty" | grep -q copilot-tools.md'
 check "rename landed and runs" '[ "$(cd "$work/repo" && node main.js)" = 5 ] && grep -q "function sum" "$work/repo/math.js"'
 
