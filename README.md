@@ -6,7 +6,7 @@
 
 pstack is Lauren Tan's ([poteto](https://x.com/poteto)) set of agent workflows. Tell it a goal and it picks the right one: root-cause a bug before fixing it, sketch a design before coding it, race several attempts and keep the best, review a diff with more than one model. Then it proves the result works. This repo makes all 54 of its skills work on Copilot.
 
-[Why](#why-this-exists) · [Install](#install) · [Use it](#use-it) · [T3-style setup](#make-the-agents-window-feel-like-t3) · [What you get](#what-you-get) · [How it works](#how-it-works) · [Security](#security) · [Credits](#credits)
+[Why](#why-this-exists) · [Install](#install) · [Use it](#use-it) · [Agents window setup](#recommended-agents-window-setup) · [What you get](#what-you-get) · [How it works](#how-it-works) · [Security](#security) · [Credits](#credits)
 
 ## Why this exists
 
@@ -36,6 +36,8 @@ This port fixes all four and leaves pstack's own content untouched. Each fix is 
 3. Open the agents window and pick **Copilot** in the session target picker.
 
 That's it. Under **Customizations**, pstack now shows up in **Plugins**, its hook in **Hooks**, and `poteto-mode` in **Skills**.
+
+**Next, take one more minute for the [recommended agents window setup](#recommended-agents-window-setup).** It adds chat tabs, a live list of running subagents, and side-by-side subagent panes, close to [T3 Code](https://t3.codes).
 
 ### Copilot CLI
 
@@ -72,9 +74,9 @@ how does auth work in this repo?
 
 </details>
 
-## Make the agents window feel like T3
+## Recommended agents window setup
 
-These are VS Code settings, so each person sets them once. Add to your user settings JSON:
+This makes VS Code's agents window work much like [T3 Code](https://t3.codes): chats in tabs, a live list of the subagents that are running, and each subagent openable in its own pane. It uses VS Code's own settings, so each person sets it up once. Add to your user settings JSON:
 
 ```json
 "sessions.showChatTabs": "multiple",
