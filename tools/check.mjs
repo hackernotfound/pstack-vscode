@@ -23,6 +23,8 @@ const upstream = JSON.parse(readFileSync(join(root, 'upstream.json'), 'utf8'));
 check('plugin.json name is pstack', plugin.name === 'pstack');
 const version = readFileSync(join(root, 'VERSION'), 'utf8').trim();
 check('plugin.json version matches VERSION and is MAJOR.MINOR.PATCH', /^\d+\.\d+\.\d+$/.test(version) && plugin.version === version);
+const readme = readFileSync(join(root, 'README.md'), 'utf8');
+check('README version badge matches VERSION', readme.includes(`version-${version.replaceAll('-', '--')}-`) && readme.includes(`releases/tag/v${version})`));
 check('plugin.json names the pinned upstream version', plugin.description.includes(`pstack-claude ${upstream.version}`));
 check('no .claude-plugin manifest (VS Code would parse it as Claude format)', !existsSync(join(out, '.claude-plugin')));
 check('plugin ships no agents (the VS Code agents window lists each plugin agent twice)', !('agents' in plugin) && !existsSync(join(out, 'agents')) && !readdirSync(out, { recursive: true }).some((rel) => /(^|\/)agents\/[^/]+\.md$/.test(rel) && !rel.startsWith('skills/')));
