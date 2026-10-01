@@ -32,6 +32,7 @@ poteto-mode's Subagents section sets Claude-specific defaults (`subagent_type: "
 - A `<level>` in an agent name or a role value goes to `task`'s `reasoning_effort`.
 - `run_in_background: true` maps to `mode: "background"`. Collect each result with `read_agent` before you use it.
 - `task` requires `description` (3 to 5 words), `prompt`, `agent_type`, and `name` (a short agent name).
+- VS Code labels each subagent with its `description`, in the chat and in its Subagents pill. Make every `description` in a run unique and lead with the role and a number, such as `Reviewer 1: security` and `Reviewer 2: tests`. Never reuse one `description` for several subagents.
 - Your Copilot plan caps concurrent subagents (Free 2, Pro 4, Max 8, Business 16, Enterprise 32). Size `swarm` and `arena` fan-out to fit, and queue the rest.
 - Keep the rest of the policy unchanged. Pass file pointers not inlined context, give each writing worker its own worktree or branch, review every subagent's diff yourself.
 

@@ -6,7 +6,7 @@
 
 pstack is Lauren Tan's ([poteto](https://x.com/poteto)) set of agent workflows. Tell it a goal and it picks the right one: root-cause a bug before fixing it, sketch a design before coding it, race several attempts and keep the best, review a diff with more than one model. Then it proves the result works. This repo makes all 54 of its skills work on Copilot.
 
-[Why](#why-this-exists) · [Install](#install) · [Use it](#use-it) · [What you get](#what-you-get) · [How it works](#how-it-works) · [Security](#security) · [Credits](#credits)
+[Why](#why-this-exists) · [Install](#install) · [Use it](#use-it) · [T3-style setup](#make-the-agents-window-feel-like-t3) · [What you get](#what-you-get) · [How it works](#how-it-works) · [Security](#security) · [Credits](#credits)
 
 ## Why this exists
 
@@ -71,6 +71,26 @@ how does auth work in this repo?
 - **Pin a version.** Marketplace installs follow `main`. To stay on one release, clone this repo, check out its tag (for example `v1.0.0`), and in VS Code set `"chat.pluginLocations": { "/absolute/path/to/pstack-vscode/plugins/pstack": true }` instead of the marketplace line.
 
 </details>
+
+## Make the agents window feel like T3
+
+These are VS Code settings, so each person sets them once. Add to your user settings JSON:
+
+```json
+"sessions.showChatTabs": "multiple",
+"chat.subagents.showCreditUsage": true,
+"chat.subagents.allowInvocationsFromSubagents": true,
+"chat.agentSessions.showExternal": "none",
+"chat.agent.sandbox.enabled": "on"
+```
+
+This gives chats tabs, shows what each subagent cost, lets subagents start their own subagents, hides sessions from other tools, and runs the agent's commands in a sandbox.
+
+To watch subagents while they run:
+
+1. **Turn on the Subagents pill.** VS Code hides it by default. Once a chat has started a subagent, right-click the row of pills above the chat input, or click **Configure Session Status Pills**, and tick **Subagents**.
+2. **Keep it short.** Right-click the **Subagents** pill and choose **Show In Progress**. Finished subagents then drop off the list.
+3. **Open one.** Click a subagent in the pill to open it as a tab, or click its card in the chat to open it in a pane beside the main chat. Each card you click adds another pane.
 
 ## What you get
 
