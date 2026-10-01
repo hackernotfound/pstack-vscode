@@ -41,12 +41,10 @@ Object.assign(env, {
   COPILOT_CLI_RUN_AS_NODE: '1',
   USE_BUILTIN_RIPGREP: 'false',
   COPILOT_MCP_APPS: 'true',
-  AI_AGENT: 'github_copilot_vscode_agent',
   AUTO_APPROVAL: 'true',
   SKILL_CHAR_BUDGET: '15000',
   ANTHROPIC_ADVISOR: 'false',
   COPILOT_HOME: home,
-  GITHUB_COPILOT_INTEGRATION_ID: 'code-oss',
   MXC_BIN_DIR: join(nodeModules, '@microsoft/mxc-sdk/bin'),
   PATH: existsSync(rgDir) ? `${env.PATH}:${rgDir}` : env.PATH,
 });
@@ -56,7 +54,7 @@ const client = new CopilotClient({
   useLoggedInUser: false,
   connection: RuntimeConnection.forStdio({ path: join(dirname(sdkDir), 'prebuilds', platform, 'copilot-runtime') }),
   env,
-  clientInfo: { applicationName: 'vscode-agent-host', applicationVersion: 'eval' },
+  clientInfo: { applicationName: 'pstack-vscode-eval', applicationVersion: '1' },
   logLevel: 'error',
 });
 await client.start();
@@ -66,7 +64,7 @@ async function run(name, prompt, timeoutMs) {
   const log = join(work, `${name}.jsonl`);
   events[name] = [];
   const session = await client.createSession({
-    clientName: 'vscode-agent-host',
+    clientName: 'pstack-vscode-eval',
     featureFlags: { CONNECTORS: false, TGREP: false, CONTENT_EXCLUSION: true },
     streaming: true,
     enableMcpApps: true,
