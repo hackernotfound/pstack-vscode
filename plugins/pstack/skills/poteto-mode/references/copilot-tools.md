@@ -24,15 +24,14 @@ pstack skills are written in Claude Code tool language (the `Skill` tool, the `A
 
 poteto-mode's Subagents section sets Claude-specific defaults (`subagent_type: "pstack:poteto-agent"`, `run_in_background: true`). On Copilot:
 
-- `subagent_type` maps to `task`'s `agent_type`. The pstack agents keep their prefix: `pstack:poteto-agent`, `pstack:comment-sicko`, `pstack:effort-<level>`, `pstack:poteto-agent-<level>`. Copilot's built-ins (`explore`, `general-purpose`, `code-review`, `research`, `rubber-duck`, `security-review`, `task`) are also valid.
-- Check `task`'s `agent_type` enum before you dispatch. Copilot CLI lists the pstack agents. The VS Code agents window's Copilot target does not load plugin agents, so there `task` rejects them with "Unknown agent_type". When a pstack agent is missing, dispatch `general-purpose` instead:
-  - For `pstack:poteto-agent` or `pstack:poteto-agent-<level>`, begin the prompt with "Before any work, load the `poteto-mode` skill with the `skill` tool and follow it, including its Principles section."
-  - For `pstack:comment-sicko`, begin the prompt with "Before any work, read `agents/comment-sicko.md` in the pstack plugin in full and act as that agent." The plugin root is two directories above poteto-mode's `SKILL.md`.
-  - For `pstack:effort-<level>`, keep the prompt as written.
-  - Pass any `<level>` as `reasoning_effort`.
+- This port ships no plugin agents. VS Code's agents window lists every plugin agent twice, and VS Code's Copilot runtime cannot dispatch them anyway. Use Copilot's built-ins as `task`'s `agent_type` (`explore`, `general-purpose`, `code-review`, `research`, `rubber-duck`, `security-review`, `task`).
+- Where a skill names a pstack agent, dispatch `general-purpose` and begin the prompt as follows:
+  - For `pstack:poteto-agent` or `pstack:poteto-agent-<level>`: "Before any work, load the `poteto-mode` skill with the `skill` tool and follow it, including its Principles section."
+  - For `pstack:comment-sicko`: "Before any work, read `skills/poteto-mode/references/agents/comment-sicko.md` in the pstack plugin in full and act as that agent." The plugin root is two directories above poteto-mode's `SKILL.md`.
+  - For `pstack:effort-<level>`: keep the prompt as written.
+- A `<level>` in an agent name or a role value goes to `task`'s `reasoning_effort`.
 - `run_in_background: true` maps to `mode: "background"`. Collect each result with `read_agent` before you use it.
 - `task` requires `description` (3 to 5 words), `prompt`, `agent_type`, and `name` (a short agent name).
-- A role value with `@<level>` dispatches the matching `pstack:effort-<level>` or `pstack:poteto-agent-<level>` agent, or passes the level as `task`'s `reasoning_effort`.
 - Your Copilot plan caps concurrent subagents (Free 2, Pro 4, Max 8, Business 16, Enterprise 32). Size `swarm` and `arena` fan-out to fit, and queue the rest.
 - Keep the rest of the policy unchanged. Pass file pointers not inlined context, give each writing worker its own worktree or branch, review every subagent's diff yourself.
 
@@ -66,7 +65,7 @@ Most skills need only the tables above. These need one more mapping:
 |-------|------------|
 | `interrogate` | The `subagent_type`/`model`/`readonly` dispatch fields map to `task`'s `agent_type`/`model`; read-only reviewers get a prompt that forbids edits. Keep the reviewer panel diverse per Model names above. |
 | `setup-pstack` | The Copilot row in the Other runtimes table names the sheet path and how it loads. The role rows are identical. |
-| `no-comments` | Dispatch `task` with `agent_type: "pstack:comment-sicko"`. |
+| `no-comments` | Dispatch `general-purpose` with the `comment-sicko` opening from Subagent policy above. |
 | `create-verification-skill` | The generated skill lands under `.claude/skills/verify/` on Claude Code; on Copilot write it to `.github/skills/verify/`. |
 | `maintain-verification-skill` | The project-local skill lives under `.github/skills/`, not `.claude/skills/`. |
 | `reflect` | The transcript finder reads Claude Code's layout under `~/.claude/projects/`; Copilot keeps sessions under `~/.copilot/session-state/`. Pass the session digest step 1 allows instead. |

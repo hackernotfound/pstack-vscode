@@ -36,7 +36,7 @@ const skillNames = () =>
     .filter((d) => d.isDirectory() && existsSync(join(out, 'skills', d.name, 'SKILL.md')))
     .map((d) => d.name);
 
-const removals = ['.codex-plugin', '.claude-plugin', 'hooks/codex-hooks.json'];
+const removals = ['.codex-plugin', '.claude-plugin', 'hooks/codex-hooks.json', 'agents', 'effort-agents'];
 
 const edits = [
   {
@@ -90,7 +90,7 @@ function buildMandate() {
   });
   if (rewrites === 0) throw new Error('mandate: no pstack:<skill> references rewritten; upstream text changed');
   const pointer =
-    '\nOn GitHub Copilot, skills load through the `skill` tool by bare name, such as `poteto-mode`. Only agents carry the `pstack:` prefix, such as `pstack:poteto-agent`; when `task` does not list them, use the fallback in copilot-tools.md. When a pstack skill names a Claude tool or model, read the pstack plugin\'s `skills/poteto-mode/references/copilot-tools.md`.\n';
+    '\nOn GitHub Copilot, skills load through the `skill` tool by bare name, such as `poteto-mode`. This plugin ships no agents; where a skill names a pstack agent, dispatch `general-purpose` as copilot-tools.md says. When a pstack skill names a Claude tool or model, read the pstack plugin\'s `skills/poteto-mode/references/copilot-tools.md`.\n';
   const mandate = text.replace('</EXTREMELY_IMPORTANT>', `${pointer}</EXTREMELY_IMPORTANT>`);
   if (mandate === text) throw new Error('mandate: closing tag not found');
   write('hooks/session-start-context.md', mandate);
@@ -107,7 +107,6 @@ function writeManifests(source) {
     author: { name: 'hackernotfound', url: 'https://github.com/hackernotfound' },
     license: 'MIT',
     keywords: ['pstack', 'poteto-mode', 'copilot', 'vscode', 'skills', 'subagents'],
-    agents: claude.agents,
     skills: './skills/',
     hooks: './hooks/hooks.json',
   };

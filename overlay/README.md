@@ -7,7 +7,7 @@ Tell `poteto-mode` your goal and it invokes the workflow that fits: reproduce an
 ## What it contains
 
 - Skills: Markdown instructions the agent loads through Copilot's `skill` tool by bare name, such as `poteto-mode`.
-- Agents: `pstack:poteto-agent` and `pstack:comment-sicko`, plus one agent per reasoning-effort level. Copilot CLI dispatches them by those names. VS Code's agents window does not load plugin agents, so there the model dispatches `general-purpose` and tells it to load `poteto-mode` first.
+- No agents. Where pstack would dispatch one of its agents, Copilot uses its built-in `general-purpose` agent and has it load `poteto-mode` first, which is all `pstack:poteto-agent` does.
 - A SessionStart hook that injects the poteto-mode routing mandate unless `~/.copilot/pstack-models.md` contains `session hook: off`.
 - `skills/poteto-mode/references/copilot-tools.md`, which maps the Claude tool and model names in the skills to Copilot's.
 - Local scripts for watching and shipping pull requests, orchestrating multi-phase plans, and auditing worktrees.

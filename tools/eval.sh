@@ -29,13 +29,19 @@ poteto_mode_loaded() {
         and (($c.arguments | objects | .skill // "") | test("poteto-mode")) and ($ok | index([$c.toolCallId])))
   ' "$work/$1.jsonl" > /dev/null
 }
-subagent_in_poteto_mode() {
-  jq -s -e '
+subagent_ran_pstack() {
+  jq -s -e --argjson skills "$(ls "$plugin/skills" | jq -R . | jq -s .)" '
     (map(select(.type=="tool.execution_complete" and .data.success==true) | .data.toolCallId)) as $ok
     | map(select(.type=="tool.execution_start") | .data) as $calls
     | any($calls[]; . as $t | $t.toolName=="task" and ($ok | index([$t.toolCallId]))
         and any($calls[]; . as $c | $c.parentToolCallId==$t.toolCallId and $c.toolName=="skill"
-          and (($c.arguments | objects | .skill // "") | test("poteto-mode")) and ($ok | index([$c.toolCallId]))))
+          and ($skills | index([($c.arguments | objects | .skill // "")])) and ($ok | index([$c.toolCallId]))))
+  ' "$work/$1.jsonl" > /dev/null
+}
+rejected_dispatch() {
+  jq -s -e '
+    (map(select(.type=="tool.execution_complete" and .data.success==false) | .data.toolCallId)) as $bad
+    | any(.[] | select(.type=="tool.execution_start" and .data.toolName=="task") | .data; . as $t | $bad | index([$t.toolCallId]))
   ' "$work/$1.jsonl" > /dev/null
 }
 
@@ -51,13 +57,13 @@ git add -A && git -c user.name=eval -c user.email=eval@local commit -qm init
 
 run context -s -p 'Do not run tools. 1) Quote verbatim the sentence in your context that starts with "On GitHub Copilot, skills load". 2) Print the full enum of the agent_type parameter of your task tool, comma separated. 3) Print the number of skills available to you whose name starts with "principle-".'
 check "mandate injected by sessionStart hook" 'final context | grep -q "skills load through the"'
-check "pstack:poteto-agent dispatchable" 'final context | grep -q "pstack:poteto-agent"'
-check "pstack:comment-sicko dispatchable" 'final context | grep -q "pstack:comment-sicko"'
+check "task offers no pstack plugin agents" '! final context | grep -q "pstack:"'
 
 run route -p 'Explain how main.js gets its output in this repo. Use poteto-mode, and delegate the code reading to one pstack subagent.'
 check "poteto-mode loaded via skill tool" 'poteto_mode_loaded route'
 check "no namespaced skill lookups" '! calls route | grep -q "\"skill\":\"pstack:"'
-check "a subagent ran and loaded poteto-mode itself" 'subagent_in_poteto_mode route'
+check "a subagent ran and loaded a pstack skill itself" 'subagent_ran_pstack route'
+check "no subagent dispatch was rejected" '! rejected_dispatch route'
 check "no Claude-only tool names called" '! calls route | grep -qE "\"t\":\"(Agent|Skill|Task|AskUserQuestion|TodoWrite)\""'
 
 run auto -p 'Rename the function add to sum everywhere in this repo, keep main.js printing 5, and verify it by running it.'

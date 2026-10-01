@@ -18,6 +18,7 @@
 - a manifest, agent, hook, or skill is missing or malformed
 - the startup instructions name a skill with the `pstack:` prefix, or the hook output is not top-level `additionalContext`
 - the plugin contains a symlink, or an executable outside the reviewed list
+- the plugin ships any agent (VS Code's agents window lists every plugin agent twice)
 - a shipped package file uses a `latest` version, a CI action is not pinned to a full commit SHA, or a CI runner or Node version is not exact
 
 ## Live checks
@@ -25,8 +26,8 @@
 `tools/eval.sh` runs Copilot CLI. `tools/eval-vscode.mjs` runs the Copilot runtime bundled inside VS Code, with the session options VS Code's agents window uses. Both create a two-file repo in a temp dir and use a throwaway `COPILOT_HOME`. They check that:
 
 - the startup instructions reach the model's context through the hook
-- on Copilot CLI, `pstack:poteto-agent` and `pstack:comment-sicko` are valid `task` agent types (VS Code's runtime doesn't load plugin agents and reports that as `INFO`)
-- a request that names poteto-mode loads it through `skill`, runs a subagent that loads poteto-mode itself, and calls no Claude-only tool names
+- no pstack plugin agents are offered, so VS Code's agent picker has nothing of ours to list twice
+- a request that names poteto-mode loads it through `skill`, runs a subagent that loads a pstack skill itself, has no subagent dispatch rejected, and calls no Claude-only tool names
 - a two-file rename, with no mention of pstack, routes into poteto-mode, reads `copilot-tools.md`, and leaves `node main.js` printing `5`
 
 The unmodified pstack-claude plugin fails three of these: the hook check, the unprompted routing, and the `copilot-tools.md` read.
