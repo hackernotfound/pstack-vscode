@@ -24,15 +24,13 @@ pstack skills are written in Claude Code tool language (the `Skill` tool, the `A
 
 poteto-mode's Subagents section sets Claude-specific defaults (`subagent_type: "pstack:poteto-agent"`, `run_in_background: true`). On Copilot:
 
-- `subagent_type` maps to `task`'s `agent_type`. The pstack agents keep their prefix: `pstack:poteto-agent`, `pstack:comment-sicko`, `pstack:effort-<level>`, `pstack:poteto-agent-<level>`. Copilot's built-ins (`explore`, `general-purpose`, `code-review`, `research`, `rubber-duck`, `security-review`, `task`) are also valid.
+- `subagent_type` maps to `task`'s `agent_type`. The pstack agents keep their prefix: `pstack:poteto-agent` and `pstack:comment-sicko`. Copilot's built-ins (`explore`, `general-purpose`, `code-review`, `research`, `rubber-duck`, `security-review`, `task`) are also valid.
 - Check `task`'s `agent_type` enum before you dispatch. Copilot CLI lists the pstack agents. The VS Code agents window's Copilot target does not load plugin agents, so there `task` rejects them with "Unknown agent_type". When a pstack agent is missing, dispatch `general-purpose` instead:
-  - For `pstack:poteto-agent` or `pstack:poteto-agent-<level>`, begin the prompt with "Before any work, load the `poteto-mode` skill with the `skill` tool and follow it, including its Principles section."
+  - For `pstack:poteto-agent`, begin the prompt with "Before any work, load the `poteto-mode` skill with the `skill` tool and follow it, including its Principles section."
   - For `pstack:comment-sicko`, begin the prompt with "Before any work, read `agents/comment-sicko.md` in the pstack plugin in full and act as that agent." The plugin root is two directories above poteto-mode's `SKILL.md`.
-  - For `pstack:effort-<level>`, keep the prompt as written.
-  - Pass any `<level>` as `reasoning_effort`.
 - `run_in_background: true` maps to `mode: "background"`. Collect each result with `read_agent` before you use it.
 - `task` requires `description` (3 to 5 words), `prompt`, `agent_type`, and `name` (a short agent name).
-- A role value with `@<level>` dispatches the matching `pstack:effort-<level>` or `pstack:poteto-agent-<level>` agent, or passes the level as `task`'s `reasoning_effort`.
+- This port does not ship pstack's effort agents. Copilot reads `reasoningEffort`, not their `effort` setting, so they would run at the default effort. Where a skill or a role value names `pstack:poteto-agent-<level>`, dispatch `pstack:poteto-agent` (or its fallback). For `pstack:effort-<level>`, dispatch `general-purpose`. Either way, pass `<level>` as `task`'s `reasoning_effort`.
 - Your Copilot plan caps concurrent subagents (Free 2, Pro 4, Max 8, Business 16, Enterprise 32). Size `swarm` and `arena` fan-out to fit, and queue the rest.
 - Keep the rest of the policy unchanged. Pass file pointers not inlined context, give each writing worker its own worktree or branch, review every subagent's diff yourself.
 

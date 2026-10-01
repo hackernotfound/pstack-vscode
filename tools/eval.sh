@@ -29,13 +29,19 @@ poteto_mode_loaded() {
         and (($c.arguments | objects | .skill // "") | test("poteto-mode")) and ($ok | index([$c.toolCallId])))
   ' "$work/$1.jsonl" > /dev/null
 }
-subagent_in_poteto_mode() {
-  jq -s -e '
+subagent_ran_pstack() {
+  jq -s -e --argjson skills "$(ls "$plugin/skills" | jq -R . | jq -s .)" '
     (map(select(.type=="tool.execution_complete" and .data.success==true) | .data.toolCallId)) as $ok
     | map(select(.type=="tool.execution_start") | .data) as $calls
     | any($calls[]; . as $t | $t.toolName=="task" and ($ok | index([$t.toolCallId]))
         and any($calls[]; . as $c | $c.parentToolCallId==$t.toolCallId and $c.toolName=="skill"
-          and (($c.arguments | objects | .skill // "") | test("poteto-mode")) and ($ok | index([$c.toolCallId]))))
+          and ($skills | index([($c.arguments | objects | .skill // "")])) and ($ok | index([$c.toolCallId]))))
+  ' "$work/$1.jsonl" > /dev/null
+}
+rejected_dispatch() {
+  jq -s -e '
+    (map(select(.type=="tool.execution_complete" and .data.success==false) | .data.toolCallId)) as $bad
+    | any(.[] | select(.type=="tool.execution_start" and .data.toolName=="task") | .data; . as $t | $bad | index([$t.toolCallId]))
   ' "$work/$1.jsonl" > /dev/null
 }
 
@@ -57,7 +63,8 @@ check "pstack:comment-sicko dispatchable" 'final context | grep -q "pstack:comme
 run route -p 'Explain how main.js gets its output in this repo. Use poteto-mode, and delegate the code reading to one pstack subagent.'
 check "poteto-mode loaded via skill tool" 'poteto_mode_loaded route'
 check "no namespaced skill lookups" '! calls route | grep -q "\"skill\":\"pstack:"'
-check "a subagent ran and loaded poteto-mode itself" 'subagent_in_poteto_mode route'
+check "a subagent ran and loaded a pstack skill itself" 'subagent_ran_pstack route'
+check "no subagent dispatch was rejected" '! rejected_dispatch route'
 check "no Claude-only tool names called" '! calls route | grep -qE "\"t\":\"(Agent|Skill|Task|AskUserQuestion|TodoWrite)\""'
 
 run auto -p 'Rename the function add to sum everywhere in this repo, keep main.js printing 5, and verify it by running it.'

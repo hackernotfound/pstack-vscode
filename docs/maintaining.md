@@ -26,7 +26,7 @@
 
 - the startup instructions reach the model's context through the hook
 - on Copilot CLI, `pstack:poteto-agent` and `pstack:comment-sicko` are valid `task` agent types (VS Code's runtime doesn't load plugin agents and reports that as `INFO`)
-- a request that names poteto-mode loads it through `skill`, runs a subagent that loads poteto-mode itself, and calls no Claude-only tool names
+- a request that names poteto-mode loads it through `skill`, runs a subagent that loads a pstack skill itself, has no subagent dispatch rejected, and calls no Claude-only tool names
 - a two-file rename, with no mention of pstack, routes into poteto-mode, reads `copilot-tools.md`, and leaves `node main.js` printing `5`
 
 The unmodified pstack-claude plugin fails three of these: the hook check, the unprompted routing, and the `copilot-tools.md` read.

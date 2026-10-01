@@ -4,7 +4,7 @@
 // Same checks as tools/eval.sh. Plugin agents are reported as INFO because VS Code passes
 // on-disk plugins without their agents. Needs VS Code >= 1.140, `gh`, and `git`.
 // Local only: it hands your gh token to an auto-approved session. Never run it in CI.
-import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -110,7 +110,9 @@ function check(label, ok) {
   if (!ok) fail = 1;
 }
 const info = (label, ok) => console.log(`INFO  ${label}: ${ok ? 'yes' : 'no'}`);
-const subagentInPotetoMode = (cs) => cs.some((t) => t.t === 'task' && t.ok && cs.some((c) => c.parent === t.id && c.t === 'skill' && String(c.a.skill).includes('poteto-mode') && c.ok));
+const pstackSkills = new Set(readdirSync(join(plugin, 'skills')));
+const subagentRanPstack = (cs) => cs.some((t) => t.t === 'task' && t.ok && cs.some((c) => c.parent === t.id && c.t === 'skill' && pstackSkills.has(String(c.a.skill)) && c.ok));
+const rejectedDispatch = (cs) => cs.some((t) => t.t === 'task' && !t.ok);
 
 const agentNames = await run('context', 'Do not run tools. 1) Quote verbatim the sentence in your context that starts with "On GitHub Copilot, skills load". 2) Print the full enum of the agent_type parameter of your task tool, comma separated. 3) Print the number of skills available to you whose name starts with "principle-".', 5 * 60_000);
 check('mandate injected by sessionStart hook', final('context').includes('skills load through the'));
@@ -120,7 +122,8 @@ await run('route', 'Explain how main.js gets its output in this repo. Use poteto
 const route = calls('route');
 check('poteto-mode loaded via skill tool', route.some((c) => c.t === 'skill' && String(c.a.skill).includes('poteto-mode') && c.ok));
 check('no namespaced skill lookups', !route.some((c) => String(c.a.skill ?? '').startsWith('pstack:')));
-check('a subagent ran and loaded poteto-mode itself', subagentInPotetoMode(route));
+check('a subagent ran and loaded a pstack skill itself', subagentRanPstack(route));
+check('no subagent dispatch was rejected', !rejectedDispatch(route));
 check('no Claude-only tool names called', !route.some((c) => /^(Agent|Skill|Task|AskUserQuestion|TodoWrite)$/.test(c.t)));
 
 await run('auto', 'Rename the function add to sum everywhere in this repo, keep main.js printing 5, and verify it by running it.', 20 * 60_000);

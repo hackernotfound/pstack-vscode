@@ -1,6 +1,6 @@
 # pstack for GitHub Copilot
 
-[![check](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml/badge.svg)](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![version](https://img.shields.io/badge/version-0.9.57--copilot.2-7C3AED.svg)](https://github.com/hackernotfound/pstack-vscode/releases/tag/v0.9.57-copilot.2)
+[![check](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml/badge.svg)](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![version](https://img.shields.io/badge/version-0.9.57--copilot.3-7C3AED.svg)](https://github.com/hackernotfound/pstack-vscode/releases/tag/v0.9.57-copilot.3)
 
 **Run [pstack](https://github.com/cursor/plugins/tree/main/pstack) in the VS Code agents window with GitHub Copilot.**
 

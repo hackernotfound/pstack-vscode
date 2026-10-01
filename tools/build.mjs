@@ -36,7 +36,7 @@ const skillNames = () =>
     .filter((d) => d.isDirectory() && existsSync(join(out, 'skills', d.name, 'SKILL.md')))
     .map((d) => d.name);
 
-const removals = ['.codex-plugin', '.claude-plugin', 'hooks/codex-hooks.json'];
+const removals = ['.codex-plugin', '.claude-plugin', 'hooks/codex-hooks.json', 'effort-agents'];
 
 const edits = [
   {
@@ -107,7 +107,7 @@ function writeManifests(source) {
     author: { name: 'hackernotfound', url: 'https://github.com/hackernotfound' },
     license: 'MIT',
     keywords: ['pstack', 'poteto-mode', 'copilot', 'vscode', 'skills', 'subagents'],
-    agents: claude.agents,
+    agents: claude.agents.filter((a) => !a.startsWith('./effort-agents/')),
     skills: './skills/',
     hooks: './hooks/hooks.json',
   };
