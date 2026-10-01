@@ -57,6 +57,16 @@ const edits = [
     replace: 'The `session hook` line applies to the Claude Code, Codex, and GitHub Copilot plugins.',
   },
   {
+    file: 'skills/poteto-mode/scripts/package.json',
+    find: '"bun-types": "latest",\n    "typescript": "latest"',
+    replace: '"bun-types": "1.3.14",\n    "typescript": "7.0.2"',
+  },
+  {
+    file: 'skills/poteto-mode/scripts/bun.lock',
+    find: '"bun-types": "latest",\n        "typescript": "latest",',
+    replace: '"bun-types": "1.3.14",\n        "typescript": "7.0.2",',
+  },
+  {
     file: 'skills/setup-pstack/SKILL.md',
     find: 'On Claude Code and Codex, the plugin\'s `SessionStart` hook',
     replace: 'On Claude Code, Codex, and GitHub Copilot, the plugin\'s `SessionStart` hook',

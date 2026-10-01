@@ -43,6 +43,7 @@ check() {
   if eval "$2"; then echo "PASS  $1"; else echo "FAIL  $1"; fail=1; fi
 }
 
+echo "copilot: $("$copilot" --version | head -1)"
 mkdir -p "$work/repo" && cd "$work/repo" && git init -q
 printf 'export function add(a, b) {\n  return a + b;\n}\n' > math.js
 printf 'import { add } from "./math.js";\nconsole.log(add(2, 3));\n' > main.js
