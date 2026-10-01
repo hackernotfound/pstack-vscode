@@ -10,6 +10,8 @@ The port is built from [pstack-claude](https://github.com/michael-denyer/pstack-
 - A fallback for pstack's agents. VS Code passes plugins to Copilot without their agents, so in the agents window `task` rejects `pstack:poteto-agent`. `copilot-tools.md` tells the model to dispatch `general-purpose` instead and have it load poteto-mode first, which is all `pstack:poteto-agent` does.
 - A Copilot `plugin.json` and a `.github/plugin/marketplace.json`, with no `.claude-plugin/` manifest. VS Code parses any plugin that has `.claude-plugin/plugin.json` as a Claude plugin.
 
+Tested with VS Code 1.140.0 and its bundled `@github/copilot-sdk` 1.0.15-preview.4, Copilot CLI 1.0.91 (`npm install -g @github/copilot@1.0.91`), bun 1.3.14, and Node 24.21.0 in CI. Every version in this repo is exact. The upstream source is a full commit SHA, CI actions are pinned to commit SHAs, and the shipped helper scripts install from `bun.lock` with integrity hashes. `tools/check.mjs` fails on a `latest` specifier, an unpinned action, a `-latest` runner, or an inexact Node version.
+
 ## Install in VS Code
 
 1. Open your user settings JSON and add:
@@ -32,7 +34,7 @@ copilot plugin marketplace add hackernotfound/pstack-vscode
 copilot plugin install pstack@pstack-vscode
 ```
 
-`marketplace add` also takes a local checkout path. The plugin then loads live from that checkout. VS Code lists plugins installed with Copilot CLI too.
+`marketplace add` also takes a local checkout path. The plugin then loads live from that checkout. A marketplace install tracks `main`. To stay on one version, check out its tag, such as `v0.9.57-copilot.2`, and install from that checkout. VS Code lists plugins installed with Copilot CLI too.
 
 Use the **Copilot** target only. The **Claude** target loads your Claude Code plugins from `~/.claude`, so if you also run pstack-claude there, keep using it for that target.
 

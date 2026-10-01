@@ -1,7 +1,7 @@
 {
   "name": "pstack",
   "displayName": "pstack (GitHub Copilot port)",
-  "version": "0.9.57-copilot.1",
+  "version": "0.9.57-copilot.2",
   "description": "if you want to go fast, go deep first. pstack helps you write less, but higher quality code. rigorous agent workflows you can parallelize with confidence. GitHub Copilot port of pstack-claude 0.9.57. Original pstack by Lauren Tan (poteto); Claude Code port by Michael Denyer.",
   "author": {
     "name": "hackernotfound",

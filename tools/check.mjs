@@ -58,4 +58,10 @@ check('no symlinks in the plugin', files.every(([, st]) => !st.isSymbolicLink())
 const found = files.filter(([, st]) => st.isFile() && st.mode & 0o111).map(([rel]) => rel).sort();
 check('executables match the reviewed list', JSON.stringify(found) === JSON.stringify(executables));
 
+const shipped = files.filter(([rel, st]) => st.isFile() && /(^|\/)(package\.json|bun\.lock)$/.test(rel)).map(([rel]) => read(rel));
+check('no "latest" version specifiers in shipped package files', shipped.length > 0 && !shipped.some((t) => /:\s*"latest"/.test(t)));
+const workflows = readdirSync(join(root, '.github/workflows')).map((f) => readFileSync(join(root, '.github/workflows', f), 'utf8'));
+check('workflow actions pinned to full commit SHAs', workflows.every((w) => [...w.matchAll(/uses:\s*(\S+)/g)].every(([, ref]) => /@[0-9a-f]{40}$/.test(ref))));
+check('workflow runners and Node versions are exact', workflows.every((w) => !/-latest\b/.test(w) && [...w.matchAll(/node-version:\s*(\S+)/g)].every(([, v]) => /^\d+\.\d+\.\d+$/.test(v))));
+
 if (failures.length) process.exit(1);
