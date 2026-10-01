@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
 import { existsSync, lstatSync, readFileSync, readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -67,5 +67,16 @@ check('no "latest" version specifiers in shipped package files', shipped.length 
 const workflows = readdirSync(join(root, '.github/workflows')).map((f) => readFileSync(join(root, '.github/workflows', f), 'utf8'));
 check('workflow actions pinned to full commit SHAs', workflows.every((w) => [...w.matchAll(/uses:\s*(\S+)/g)].every(([, ref]) => /@[0-9a-f]{40}$/.test(ref))));
 check('workflow runners and Node versions are exact', workflows.every((w) => !/-latest\b/.test(w) && [...w.matchAll(/node-version:\s*(\S+)/g)].every(([, v]) => /^\d+\.\d+\.\d+$/.test(v))));
+
+const crossSkill = skills.flatMap((skill) =>
+  readdirSync(join(out, 'skills', skill), { recursive: true })
+    .filter((rel) => rel.endsWith('.md'))
+    .flatMap((rel) => {
+      const file = join(out, 'skills', skill, rel);
+      return [...readFileSync(file, 'utf8').matchAll(/\]\(([^)#\s]+)/g)]
+        .map(([, target]) => target)
+        .filter((target) => !/^[a-z]+:/i.test(target) && !resolve(dirname(file), target).startsWith(join(out, 'skills', skill) + '/'));
+    }));
+check('no skill links outside its own folder (awesome-copilot vally valid-refs)', crossSkill.length === 0);
 
 if (failures.length) process.exit(1);

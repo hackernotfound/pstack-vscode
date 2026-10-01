@@ -5,7 +5,7 @@ description: Configure which models pstack uses per role. Detects available mode
 
 # Setup pstack
 
-On Codex, read the [platform mapping](../poteto-mode/references/codex-tools.md), including its per-skill notes, before following this skill.
+On Codex, read the platform mapping (see `skills/poteto-mode/references/codex-tools.md` in this plugin), including its per-skill notes, before following this skill.
 
 On another runtime, read [Other runtimes](#other-runtimes) below for where the sheet lives and how it loads; the steps are the same.
 
@@ -93,8 +93,8 @@ The role lines are the same everywhere. What differs is the sheet path, how the 
 | Runtime | Sheet | Load | List models | Status |
 | --- | --- | --- | --- | --- |
 | Claude Code | `<config>/pstack-models.md` | `@<config>/pstack-models.md` in `<config>/CLAUDE.md` | the `Agent` tool's model parameter | verified live |
-| Codex | `<codex-home>/pstack-models.md` | model rows: paste into `<codex-home>/AGENTS.md`; hook setting: read by the plugin | your configured Codex models, see [codex-tools.md](../poteto-mode/references/codex-tools.md#model-names) | hook contract tested; discovery verified |
-| GitHub Copilot | `<copilot-home>/pstack-models.md`, where `<copilot-home>` is `$COPILOT_HOME` or `~/.copilot` | model rows: paste into `<copilot-home>/copilot-instructions.md`; hook setting: read by the plugin | slugs the runtime accepts for `task`'s `model`, see [copilot-tools.md](../poteto-mode/references/copilot-tools.md#model-names) | hook contract and dispatch verified on Copilot CLI |
+| Codex | `<codex-home>/pstack-models.md` | model rows: paste into `<codex-home>/AGENTS.md`; hook setting: read by the plugin | your configured Codex models, see codex-tools.md (see `skills/poteto-mode/references/codex-tools.md` in this plugin) | hook contract tested; discovery verified |
+| GitHub Copilot | `<copilot-home>/pstack-models.md`, where `<copilot-home>` is `$COPILOT_HOME` or `~/.copilot` | model rows: paste into `<copilot-home>/copilot-instructions.md`; hook setting: read by the plugin | slugs the runtime accepts for `task`'s `model`, see copilot-tools.md (see `skills/poteto-mode/references/copilot-tools.md` in this plugin) | hook contract and dispatch verified on Copilot CLI |
 | opencode | `~/.config/opencode/pstack-models.md` | add the path to the `instructions` array in `opencode.json` | the `models` slash command in the session | from published docs, no live session |
 | Gemini CLI | `~/.gemini/pstack-models.md` | `@~/.gemini/pstack-models.md` in `~/.gemini/GEMINI.md` | the `model` slash command in the session | from published docs, no live session |
 | Prime Agent | no documented sheet path; Prime's configuration chooses models | | | no live session |
