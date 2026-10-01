@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -81,6 +81,25 @@ function applyEdit({ file, find, replace }) {
   write(file, text.replace(find, () => replace));
 }
 
+function unlinkCrossSkillReferences() {
+  const skillsRoot = join(out, 'skills');
+  const link = /\[([^\]]+)\]\(((?:\.\.\/)+)([a-z0-9-]+)\/([^)#\s]*)(#[^)\s]*)?\)/g;
+  let rewrites = 0;
+  for (const rel of readdirSync(skillsRoot, { recursive: true })) {
+    if (!rel.endsWith('.md')) continue;
+    const file = join(skillsRoot, rel);
+    const text = readFileSync(file, 'utf8');
+    const next = text.replace(link, (match, label, ups, skill, rest) => {
+      const target = resolve(dirname(file), ups, skill, rest);
+      if (!target.startsWith(`${skillsRoot}/`) || target.startsWith(`${join(skillsRoot, rel.split('/')[0])}/`)) return match;
+      rewrites++;
+      return `${label} (see \`${relative(out, target)}\` in this plugin)`;
+    });
+    if (next !== text) writeFileSync(file, next);
+  }
+  if (rewrites === 0) throw new Error('cross-skill links: none rewritten; upstream link style changed');
+}
+
 function buildMandate() {
   const names = new Set(skillNames());
   let rewrites = 0;
@@ -137,6 +156,7 @@ cpSync(join(source, 'plugins/pstack'), out, { recursive: true });
 for (const rel of removals) rmSync(join(out, rel), { recursive: true, force: true });
 cpSync(join(root, 'overlay'), out, { recursive: true });
 edits.forEach(applyEdit);
+unlinkCrossSkillReferences();
 buildMandate();
 writeManifests(source);
 copyLicenses(source);
