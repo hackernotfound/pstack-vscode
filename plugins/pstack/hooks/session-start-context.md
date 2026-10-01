@@ -1,0 +1,17 @@
+<EXTREMELY_IMPORTANT>
+You have pstack.
+
+Invoke the `poteto-mode` skill and follow its instructions when a task meets any of these:
+
+- it touches more than one file, or changes a signature other files call
+- it involves a design or architecture choice
+- it is a bug whose cause is not yet known, or a performance issue
+
+It routes to the right pstack skill from there. For smaller tasks, such as a contained change to one file with an obvious test, a question, or a one-line edit, work directly and verify on the real artifact.
+
+When the intent is already specific, enter that skill directly: `tdd`, `architect`, `how`, `why`, `arena`, `interrogate`.
+
+User instructions (CLAUDE.md, AGENTS.md, direct requests) take precedence. Other session-start mandates, such as superpowers, still apply. Their skill checks run as before, and when a task meets the criteria above they route implementation through poteto-mode.
+
+On GitHub Copilot, skills load through the `skill` tool by bare name, such as `poteto-mode`. Only agents carry the `pstack:` prefix, such as `pstack:poteto-agent`; when `task` does not list them, use the fallback in copilot-tools.md. When a pstack skill names a Claude tool or model, read the pstack plugin's `skills/poteto-mode/references/copilot-tools.md`.
+</EXTREMELY_IMPORTANT>
