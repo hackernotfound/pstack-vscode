@@ -1,83 +1,124 @@
 # pstack for GitHub Copilot
 
-A GitHub Copilot port of [pstack](https://github.com/cursor/plugins/tree/main/pstack), the agent workflow plugin by Lauren Tan ([poteto](https://x.com/poteto)). It runs in the VS Code agents window with the **Copilot** target and in Copilot CLI.
+[![check](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml/badge.svg)](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![version](https://img.shields.io/badge/version-0.9.57--copilot.2-7C3AED.svg)](https://github.com/hackernotfound/pstack-vscode/releases/tag/v0.9.57-copilot.2)
 
-The port is built from [pstack-claude](https://github.com/michael-denyer/pstack-claude), Michael Denyer's Claude Code port, at the commit pinned in [`upstream.json`](upstream.json) (currently 0.9.57). The skills, playbooks, and agents are unchanged. The port adds what Copilot needs to run them:
+**Run [pstack](https://github.com/cursor/plugins/tree/main/pstack) in the VS Code agents window with GitHub Copilot.**
 
-- A `SessionStart` hook that injects the poteto-mode mandate as `additionalContext`. Copilot drops plain hook output, so the Claude Code hook does nothing there.
-- [`copilot-tools.md`](overlay/skills/poteto-mode/references/copilot-tools.md), which maps the Claude tool names the skills use (`Agent`, `Skill`, `AskUserQuestion`, `TodoWrite`, model aliases) to Copilot's (`task`, `skill`, `ask_user`, `update_todo`). poteto-mode points Copilot at it.
-- Bare skill names in the mandate. Copilot's `skill` tool resolves `poteto-mode` but returns "Skill not found" for `pstack:poteto-mode`. Agents keep the prefix. Copilot CLI dispatches `pstack:poteto-agent` as-is.
-- A fallback for pstack's agents. VS Code passes plugins to Copilot without their agents, so in the agents window `task` rejects `pstack:poteto-agent`. `copilot-tools.md` tells the model to dispatch `general-purpose` instead and have it load poteto-mode first, which is all `pstack:poteto-agent` does.
-- A Copilot `plugin.json` and a `.github/plugin/marketplace.json`, with no `.claude-plugin/` manifest. VS Code parses any plugin that has `.claude-plugin/plugin.json` as a Claude plugin.
+pstack is Lauren Tan's ([poteto](https://x.com/poteto)) set of agent workflows. Tell it a goal and it picks the right one: root-cause a bug before fixing it, sketch a design before coding it, race several attempts and keep the best, review a diff with more than one model. Then it proves the result works. This repo makes all 54 of its skills work on Copilot.
 
-Tested with VS Code 1.140.0 and its bundled `@github/copilot-sdk` 1.0.15-preview.4, Copilot CLI 1.0.91 (`npm install -g @github/copilot@1.0.91`), bun 1.3.14, and Node 24.21.0 in CI. Every version in this repo is exact. The upstream source is a full commit SHA, CI actions are pinned to commit SHAs, and the shipped helper scripts install from `bun.lock` with integrity hashes. `tools/check.mjs` fails on a `latest` specifier, an unpinned action, a `-latest` runner, or an inexact Node version.
+[Why](#why-this-exists) · [Install](#install) · [Use it](#use-it) · [What you get](#what-you-get) · [How it works](#how-it-works) · [Security](#security) · [Credits](#credits)
 
-## Install in VS Code
+## Why this exists
 
-1. Open your user settings JSON and add:
+pstack ships for Cursor, and [pstack-claude](https://github.com/michael-denyer/pstack-claude) ports it to Claude Code. VS Code's new agents window can load Claude Code plugins too, so it looks like pstack-claude should just work there. On the **Copilot** target it doesn't, and nothing tells you:
+
+| What you'd expect | What actually happens on Copilot |
+| --- | --- |
+| pstack switches on at the start of every session | Copilot ignores the plain text the startup hook prints, so pstack never switches on |
+| The skills load as `pstack:poteto-mode`, `pstack:tdd`, ... | Copilot answers "Skill not found" to the `pstack:` prefix |
+| Skills call `Agent`, `Skill`, `AskUserQuestion`, `TodoWrite` | Copilot's tools are named `task`, `skill`, `ask_user`, `update_todo` |
+| `pstack:poteto-agent` handles delegated work | VS Code never loads plugin agents, so every dispatch to it is rejected |
+
+This port fixes all four and leaves pstack's own content untouched. Each fix is checked against the real Copilot runtime, both the Copilot CLI and the copy bundled inside VS Code. The plugin as pstack-claude ships it, unchanged, fails three of those checks.
+
+## Install
+
+### VS Code
+
+1. Open **Preferences: Open User Settings (JSON)** and add:
 
    ```json
    "chat.plugins.enabled": true,
    "chat.plugins.marketplaces": ["hackernotfound/pstack-vscode"]
    ```
 
-2. Open the Extensions view and search `@agentPlugins`. Install **pstack** and accept the marketplace trust prompt.
-3. Open the agents window. In the session target picker, select **Copilot**.
-4. Start a session. Under **Customizations**, **Plugins** lists pstack, **Hooks** lists its `SessionStart` hook, and **Skills** includes `poteto-mode`.
+2. In the Extensions view, search `@agentPlugins`, install **pstack**, and accept the trust prompt.
+3. Open the agents window and pick **Copilot** in the session target picker.
 
-To use a local checkout instead of the marketplace, replace step 1's marketplace line with `"chat.pluginLocations": { "/absolute/path/to/pstack-vscode/plugins/pstack": true }`.
+That's it. Under **Customizations**, pstack now shows up in **Plugins**, its hook in **Hooks**, and `poteto-mode` in **Skills**.
 
-## Install in Copilot CLI
+### Copilot CLI
 
 ```shell
 copilot plugin marketplace add hackernotfound/pstack-vscode
 copilot plugin install pstack@pstack-vscode
 ```
 
-`marketplace add` also takes a local checkout path. The plugin then loads live from that checkout. A marketplace install tracks `main`. To stay on one version, check out its tag, such as `v0.9.57-copilot.2`, and install from that checkout. VS Code lists plugins installed with Copilot CLI too.
+VS Code also lists plugins you install this way.
 
-Use the **Copilot** target only. The **Claude** target loads your Claude Code plugins from `~/.claude`, so if you also run pstack-claude there, keep using it for that target.
+> **Using the Claude target too?** The Claude target loads your Claude Code plugins from `~/.claude`. Keep pstack-claude for that target, and use this port for **Copilot**.
 
 ## Use it
 
-Multi-file changes, design choices, and bugs with an unknown cause route into poteto-mode on their own. To enter a workflow directly, ask for it by name ("use poteto-mode", "run tdd on this") or pick it from the slash-command list: `poteto-mode`, `tdd`, `architect`, `how`, `why`, `arena`, `interrogate`. Copilot CLI lists plugin skills without the `pstack:` prefix. VS Code may show them as `/pstack:<skill>`.
+Just work as usual. A change that touches more than one file, a design question, or a bug with an unknown cause switches pstack into `poteto-mode` on its own, and it picks the matching playbook from there.
 
-To turn off the session hook, add `session hook: off` to `~/.copilot/pstack-models.md`.
+To start a workflow yourself, ask for it by name:
 
-### Models
+```text
+use poteto-mode to add rate limiting to the API client
+run tdd on the date parser bug
+architect the new sync engine before writing code
+how does auth work in this repo?
+```
 
-Copilot does not accept Claude's model aliases, and the models an account can pick depend on its plan. By default the port leaves `task`'s `model` unset and Copilot chooses. To pin models per role, run `/setup-pstack`. It writes `~/.copilot/pstack-models.md` with slugs your account accepts, such as `claude-opus-5.5`.
+<details>
+<summary><b>Options</b>: turn off the startup hook, pick models, pin a version</summary>
+
+- **Turn off the startup hook.** Add `session hook: off` to `~/.copilot/pstack-models.md`. pstack then runs only when you ask for it.
+- **Pick models.** By default Copilot chooses each subagent's model, because which models you can use depends on your plan. To pin models per role, run `setup-pstack`. It writes `~/.copilot/pstack-models.md` with model names your account accepts, such as `claude-opus-5.5`.
+- **Pin a version.** Marketplace installs follow `main`. To stay on one release, clone this repo, check out its tag (for example `v0.9.57-copilot.2`), and in VS Code set `"chat.pluginLocations": { "/absolute/path/to/pstack-vscode/plugins/pstack": true }` instead of the marketplace line.
+
+</details>
+
+## What you get
+
+| Skill | What it does |
+| --- | --- |
+| `poteto-mode` | The entry point. Picks a playbook for your task and holds the work to pstack's principles. |
+| `tdd` | Reproduces a bug with a failing test, then fixes it. |
+| `architect` | Sketches types and module shape before any code. |
+| `arena` | Races several attempts at a task, then keeps and combines the best parts. |
+| `interrogate` | Reviews a diff with an adversarial panel of reviewers. |
+| `how` / `why` | Explains how code works, or why it was built that way. |
+| `unslop` / `deslop` | Cuts filler from prose and from code. |
+| `principle-*` | 23 short engineering principles the workflows cite as they work. |
+
+Every skill is in [`plugins/pstack/skills/`](plugins/pstack/skills/).
+
+## How it works
+
+```mermaid
+flowchart LR
+  A["pstack-claude<br/>(pinned commit)"] --> B["tools/build.mjs"]
+  O["overlay/<br/>Copilot fixes"] --> B
+  B --> P["plugins/pstack"]
+  P --> V["VS Code agents window<br/>(Copilot target)"]
+  P --> C["Copilot CLI"]
+```
+
+`tools/build.mjs` copies pstack-claude at the commit pinned in [`upstream.json`](upstream.json), adds the Copilot fixes from [`overlay/`](overlay/), and writes the plugin to `plugins/pstack/`. The fixes are:
+
+- **A startup hook that Copilot reads.** It prints the poteto-mode instructions as JSON with an `additionalContext` field, the only hook output Copilot injects.
+- **A Copilot tool map.** [`copilot-tools.md`](overlay/skills/poteto-mode/references/copilot-tools.md) translates every Claude tool and model name the skills use. `poteto-mode` points Copilot at it.
+- **Bare skill names** in the startup instructions, such as `poteto-mode` rather than `pstack:poteto-mode`.
+- **An agent fallback.** Where `task` doesn't list pstack's agents, as in VS Code, Copilot dispatches its built-in `general-purpose` agent and has it load `poteto-mode` first. That's all `pstack:poteto-agent` does.
+- **A Copilot-only manifest.** VS Code treats any plugin with a `.claude-plugin/` folder as a Claude plugin, so the port ships only a Copilot `plugin.json`.
+
+Tested on VS Code 1.140.0 and its bundled Copilot runtime, and on Copilot CLI 1.0.91. Updating to a newer pstack, the generated files, and the live tests are covered in [docs/maintaining.md](docs/maintaining.md).
 
 ## Security
 
-- The plugin has no server and no telemetry. Anything its skills ask the agent to read goes to your model provider.
-- The only code that runs on its own is the `SessionStart` hook. It reads `~/.copilot/pstack-models.md` for `session hook: off` and prints a fixed JSON file from the plugin. It takes no input from the workspace.
-- Skills can ask the agent to run the scripts in `skills/poteto-mode/scripts/`. They call `git`, `gh`, and `gt` with your login and install pinned packages from `bun.lock`. `scripts/watch-pr/live-merge-safety.mjs --live-disposable` creates and deletes a throwaway repo under your account, and only runs with that flag.
-- Keep tool approvals on. In VS Code, leave `chat.tools.autoApprove` off. In Copilot CLI, avoid `--allow-all-tools` and `--allow-all-paths` in normal use.
-- Accept the marketplace trust prompt only for `hackernotfound/pstack-vscode`.
-- On each `upstream.json` bump, review the `plugins/pstack/` diff before you install it. `tools/check.mjs` fails on symlinks and on executables outside a reviewed list.
+- **No server, no telemetry.** Whatever the skills ask your agent to read goes only to your model provider.
+- **One thing runs by itself.** That's the startup hook. It prints a fixed file from the plugin and reads nothing from your workspace.
+- **Scripts run only when your agent runs them.** The helper scripts in `skills/poteto-mode/scripts/` use your `git` and `gh` login. Keep tool approvals on, and leave `chat.tools.autoApprove` off in VS Code.
+- **Everything is pinned.** The upstream source is a full commit SHA, the script dependencies install from a lockfile with integrity hashes, and CI actions are pinned to commit SHAs. CI fails if anything floats.
 
-## Update to a newer pstack-claude
+Found a vulnerability? See [SECURITY.md](SECURITY.md).
 
-1. Set `sha` and `version` in [`upstream.json`](upstream.json) to the new pstack-claude commit. Reset `portRevision` to 1.
-2. Run `node tools/build.mjs`. Each edit must match its anchor text exactly once. If upstream reworded an anchor, the build stops and names the file.
-3. Run `node tools/check.mjs` for the static checks.
-4. Run `tools/eval.sh` and `node tools/eval-vscode.mjs` for the live checks. It needs `copilot`, `gh`, and `jq`. It gives your `gh` token to an auto-approved session with web tools, `curl`, `wget`, and `gh` blocked, so run it only on your own machine, never in CI.
-5. Commit `upstream.json` with the rebuilt `plugins/pstack/`.
+## Credits
 
-Never edit `plugins/pstack/` by hand. It is generated. Put Copilot-specific files in `overlay/` and text edits in the `edits` table in [`tools/build.mjs`](tools/build.mjs). `check.mjs` fails when the committed tree differs from a fresh build.
+- **[pstack](https://github.com/cursor/plugins/tree/main/pstack)** by Lauren Tan ([poteto](https://x.com/poteto)). The workflows, skills, and principles are hers.
+- **[pstack-claude](https://github.com/michael-denyer/pstack-claude)** by Michael Denyer. The Claude Code port this one is built from.
+- **cursor-team-kit** skills by Cursor.
 
-## What the live checks cover
-
-`tools/eval.sh` runs Copilot CLI. `tools/eval-vscode.mjs` runs the Copilot runtime bundled inside VS Code, started with the session options VS Code's agents window uses. Both create a two-file repo in a temp dir and use a throwaway `COPILOT_HOME`:
-
-- The mandate reaches the model's context through the hook.
-- On Copilot CLI, `pstack:poteto-agent` and `pstack:comment-sicko` are valid `task` agent types. The VS Code runtime does not load them and reports that as `INFO`.
-- A request that names poteto-mode loads it through `skill`, runs a subagent that loads poteto-mode itself, and calls no Claude-only tool names.
-- A two-file rename, with no mention of pstack, routes into poteto-mode, reads `copilot-tools.md`, and leaves `node main.js` printing `5`.
-
-The unmodified pstack-claude plugin fails three of these on Copilot: the mandate check, the unprompted routing, and the `copilot-tools.md` read.
-
-## License
-
-MIT. pstack is (c) 2026 Lauren Tan, the cursor-team-kit skills are (c) 2026 Cursor, and the Claude Code port is (c) 2026 Michael Denyer. Their license and notice files are in [`licenses/`](licenses/). See [NOTICE.md](NOTICE.md) for this port's additions.
+MIT licensed. Upstream license and notice files are in [`licenses/`](licenses/), and [NOTICE.md](NOTICE.md) lists what this port adds.
