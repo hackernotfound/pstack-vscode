@@ -4,7 +4,7 @@
 
 ## Update to a newer pstack-claude
 
-1. Set `sha` and `version` in [`upstream.json`](../upstream.json) to the new pstack-claude commit. Reset `portRevision` to 1.
+1. Set `sha` and `version` in [`upstream.json`](../upstream.json) to the new pstack-claude commit, and bump [`VERSION`](../VERSION). Use a patch bump for fixes, a minor bump for a new upstream sync, and a major bump when installs or behavior change incompatibly.
 2. Run `node tools/build.mjs`. Each edit must match its anchor text exactly once. If upstream reworded an anchor, the build stops and names the file.
 3. Run `node tools/check.mjs` for the static checks.
 4. Run `tools/eval.sh` and `node tools/eval-vscode.mjs` for the live checks.

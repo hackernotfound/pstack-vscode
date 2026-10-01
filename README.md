@@ -1,6 +1,6 @@
 # pstack for GitHub Copilot
 
-[![check](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml/badge.svg)](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![version](https://img.shields.io/badge/version-0.9.57--copilot.3-7C3AED.svg)](https://github.com/hackernotfound/pstack-vscode/releases/tag/v0.9.57-copilot.3)
+[![check](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml/badge.svg)](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![version](https://img.shields.io/badge/version-1.0.0-7C3AED.svg)](https://github.com/hackernotfound/pstack-vscode/releases/tag/v1.0.0)
 
 **Run [pstack](https://github.com/cursor/plugins/tree/main/pstack) in the VS Code agents window with GitHub Copilot.**
 
@@ -61,12 +61,14 @@ architect the new sync engine before writing code
 how does auth work in this repo?
 ```
 
+> **First read in a session.** pstack keeps its playbooks inside the plugin folder, outside your workspace. The first time a session reads one, VS Code asks **Allow reading file outside of workspace?** and shows the plugin path. Choose **Allow in this Session**. Reads of pstack's other files in that session then go through without asking.
+
 <details>
 <summary><b>Options</b>: turn off the startup hook, pick models, pin a version</summary>
 
 - **Turn off the startup hook.** Add `session hook: off` to `~/.copilot/pstack-models.md`. pstack then runs only when you ask for it.
 - **Pick models.** By default Copilot chooses each subagent's model, because which models you can use depends on your plan. To pin models per role, run `setup-pstack`. It writes `~/.copilot/pstack-models.md` with model names your account accepts, such as `claude-opus-5.5`.
-- **Pin a version.** Marketplace installs follow `main`. To stay on one release, clone this repo, check out its tag (for example `v0.9.57-copilot.2`), and in VS Code set `"chat.pluginLocations": { "/absolute/path/to/pstack-vscode/plugins/pstack": true }` instead of the marketplace line.
+- **Pin a version.** Marketplace installs follow `main`. To stay on one release, clone this repo, check out its tag (for example `v1.0.0`), and in VS Code set `"chat.pluginLocations": { "/absolute/path/to/pstack-vscode/plugins/pstack": true }` instead of the marketplace line.
 
 </details>
 
