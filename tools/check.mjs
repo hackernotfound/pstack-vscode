@@ -20,7 +20,14 @@ check('build is idempotent (rebuild leaves no diff)', dirty === '');
 
 const plugin = JSON.parse(read('plugin.json'));
 const upstream = JSON.parse(readFileSync(join(root, 'upstream.json'), 'utf8'));
-check('plugin.json name is pstack', plugin.name === 'pstack');
+check('plugin.json name is pstack-copilot', plugin.name === 'pstack-copilot');
+const manifestKeys = ['$schema', 'author', 'description', 'extensions', 'homepage', 'keywords', 'license', 'name', 'repository', 'version'];
+check(
+  'plugin.json is Agent Plugins 1.0 (schema URL, only schema properties, Copilot namespace)',
+  plugin.$schema === 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json' &&
+    Object.keys(plugin).every((k) => manifestKeys.includes(k)) &&
+    JSON.stringify(plugin.extensions) === '{"com.github.copilot":{}}',
+);
 const version = readFileSync(join(root, 'VERSION'), 'utf8').trim();
 check('plugin.json version matches VERSION and is MAJOR.MINOR.PATCH', /^\d+\.\d+\.\d+$/.test(version) && plugin.version === version);
 const readme = readFileSync(join(root, 'README.md'), 'utf8');
@@ -28,28 +35,33 @@ check('README version badge matches VERSION', readme.includes(`version-${version
 check('plugin.json names the pinned upstream version', plugin.description.includes(`pstack-claude ${upstream.version}`));
 check('no .claude-plugin manifest (VS Code would parse it as Claude format)', !existsSync(join(out, '.claude-plugin')));
 check('plugin ships no agents (the VS Code agents window lists each plugin agent twice)', !('agents' in plugin) && !existsSync(join(out, 'agents')) && !readdirSync(out, { recursive: true }).some((rel) => /(^|\/)agents\/[^/]+\.md$/.test(rel) && !rel.startsWith('skills/')));
-check('hooks file exists', existsSync(join(out, plugin.hooks)));
+const hooks = 'com.github.copilot/hooks';
+const hookCommands = JSON.parse(read(`${hooks}/hooks.json`)).hooks.SessionStart.flatMap((g) => g.hooks.map((h) => h.command));
+check(
+  'SessionStart hook runs a script that ships, via ${PLUGIN_ROOT}',
+  hookCommands.length === 1 && hookCommands.every((c) => c.startsWith('"${PLUGIN_ROOT}/') && existsSync(join(out, c.slice('"${PLUGIN_ROOT}/'.length, -1)))),
+);
 
 const market = JSON.parse(readFileSync(join(root, '.github/plugin/marketplace.json'), 'utf8'));
-check('marketplace source points at the plugin', market.plugins.some((p) => existsSync(join(root, p.source, 'plugin.json'))));
+check('marketplace entry points at the plugin by its name', market.plugins.some((p) => p.name === plugin.name && existsSync(join(root, p.source, 'plugin.json'))));
 
 const skills = readdirSync(join(out, 'skills')).filter((d) => existsSync(join(out, 'skills', d, 'SKILL.md')));
 check('every SKILL.md name matches its directory', skills.every((d) => new RegExp(`^name: ${d}$`, 'm').test(read(`skills/${d}/SKILL.md`))));
 
-const mandate = read('hooks/session-start-context.md');
-const ctx = JSON.parse(read('hooks/session-start-context.json'));
+const mandate = read(`${hooks}/session-start-context.md`);
+const ctx = JSON.parse(read(`${hooks}/session-start-context.json`));
 check('hook JSON carries the mandate as top-level additionalContext', ctx.additionalContext === mandate);
 check('mandate names no pstack:<skill>', !skills.some((s) => mandate.includes(`pstack:${s}`)));
 check('mandate under Claude Code 10k cap', mandate.length < 10000);
 
-const hookOut = execFileSync(join(out, 'hooks/session-start.sh'), { env: { ...process.env, COPILOT_HOME: '/nonexistent' }, encoding: 'utf8' });
+const hookOut = execFileSync(join(out, hooks, 'session-start.sh'), { env: { ...process.env, COPILOT_HOME: '/nonexistent' }, encoding: 'utf8' });
 check('hook script prints the JSON', JSON.parse(hookOut).additionalContext === mandate);
 
 check('poteto-mode links copilot-tools.md', read('skills/poteto-mode/SKILL.md').includes('references/copilot-tools.md'));
 check('copilot-tools.md shipped', existsSync(join(out, 'skills/poteto-mode/references/copilot-tools.md')));
 
 const executables = [
-  'hooks/session-start.sh',
+  'com.github.copilot/hooks/session-start.sh',
   'skills/poteto-mode/scripts/orch/orch.ts',
   'skills/poteto-mode/scripts/watch-pr/ship-pr',
   'skills/poteto-mode/scripts/watch-pr/watch-pr',

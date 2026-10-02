@@ -1,6 +1,6 @@
 # pstack for GitHub Copilot
 
-[![check](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml/badge.svg)](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![version](https://img.shields.io/badge/version-1.1.1-7C3AED.svg)](https://github.com/hackernotfound/pstack-vscode/releases/tag/v1.1.1)
+[![check](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml/badge.svg)](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![version](https://img.shields.io/badge/version-1.2.0-7C3AED.svg)](https://github.com/hackernotfound/pstack-vscode/releases/tag/v1.2.0)
 
 **Run [pstack](https://github.com/cursor/plugins/tree/main/pstack) in the VS Code agents window with GitHub Copilot.**
 
@@ -32,10 +32,10 @@ This port fixes all four and leaves pstack's own content untouched. Each fix is 
    "chat.plugins.marketplaces": ["hackernotfound/pstack-vscode"]
    ```
 
-2. In the Extensions view, search `@agentPlugins`, install **pstack**, and accept the trust prompt.
+2. In the Extensions view, search `@agentPlugins`, install **pstack-copilot**, and accept the trust prompt.
 3. Open the agents window and pick **Copilot** in the session target picker.
 
-That's it. Under **Customizations**, pstack now shows up in **Plugins**, its hook in **Hooks**, and `poteto-mode` in **Skills**.
+That's it. Under **Customizations**, pstack-copilot now shows up in **Plugins**, its hook in **Hooks**, and `poteto-mode` in **Skills**.
 
 **Want to see your subagents while they run?** Follow the one-time [agents window setup](docs/agents-window.md). It adds a live list of running subagents, side-by-side subagent panes, and chat tabs, close to [T3 Code](https://t3.codes).
 
@@ -43,10 +43,12 @@ That's it. Under **Customizations**, pstack now shows up in **Plugins**, its hoo
 
 ```shell
 copilot plugin marketplace add hackernotfound/pstack-vscode
-copilot plugin install pstack@pstack-vscode
+copilot plugin install pstack-copilot@pstack-vscode
 ```
 
 VS Code also lists plugins you install this way.
+
+> **Installed 1.1.1 or earlier?** The plugin was called `pstack` then. Run `copilot plugin uninstall pstack`, then install `pstack-copilot` as above. In VS Code, uninstall **pstack** and install **pstack-copilot**. A `chat.pluginLocations` path to `plugins/pstack` keeps working as it is.
 
 > **Using the Claude target too?** The Claude target loads your Claude Code plugins from `~/.claude`. Keep pstack-claude for that target, and use this port for **Copilot**.
 
@@ -106,7 +108,7 @@ flowchart LR
 - **A Copilot tool map.** [`copilot-tools.md`](overlay/skills/poteto-mode/references/copilot-tools.md) translates every Claude tool and model name the skills use. `poteto-mode` points Copilot at it.
 - **Bare skill names** in the startup instructions, such as `poteto-mode` rather than `pstack:poteto-mode`.
 - **No plugin agents.** Copilot dispatches its built-in `general-purpose` agent and has it load `poteto-mode` first, which is all `pstack:poteto-agent` does. Shipping no agents also keeps VS Code's agent picker free of duplicates.
-- **A Copilot-only manifest.** VS Code treats any plugin with a `.claude-plugin/` folder as a Claude plugin, so the port ships only a Copilot `plugin.json`.
+- **An [Agent Plugins 1.0](https://agent-plugins.org) manifest.** The startup hook lives under `com.github.copilot/`, where Copilot looks for it in that format. The port ships no `.claude-plugin/` folder, because VS Code treats any plugin with one as a Claude plugin.
 
 Tested on VS Code 1.140.0 and its bundled Copilot runtime, and on Copilot CLI 1.0.91. Updating to a newer pstack, the generated files, and the live tests are covered in [docs/maintaining.md](docs/maintaining.md).
 

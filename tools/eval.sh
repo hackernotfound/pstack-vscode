@@ -57,11 +57,11 @@ git add -A && git -c user.name=eval -c user.email=eval@local commit -qm init
 
 run context -s -p 'Do not run tools. 1) Quote verbatim the sentence in your context that starts with "On GitHub Copilot, skills load". 2) Print the full enum of the agent_type parameter of your task tool, comma separated. 3) Print the number of skills available to you whose name starts with "principle-".'
 check "mandate injected by sessionStart hook" 'final context | grep -q "skills load through the"'
-check "task offers no pstack plugin agents" '! final context | grep -q "pstack:"'
+check "task offers no pstack plugin agents" '! final context | grep -Eq "pstack(-copilot)?:"'
 
 run route -p 'Explain how main.js gets its output in this repo. Use poteto-mode, and delegate the code reading to one pstack subagent.'
 check "poteto-mode loaded via skill tool" 'poteto_mode_loaded route'
-check "no namespaced skill lookups" '! calls route | grep -q "\"skill\":\"pstack:"'
+check "no namespaced skill lookups" '! calls route | grep -Eq "\"skill\":\"pstack(-copilot)?:"'
 check "a subagent ran and loaded a pstack skill itself" 'subagent_ran_pstack route'
 check "no subagent dispatch was rejected" '! rejected_dispatch route'
 check "no Claude-only tool names called" '! calls route | grep -qE "\"t\":\"(Agent|Skill|Task|AskUserQuestion|TodoWrite)\""'
