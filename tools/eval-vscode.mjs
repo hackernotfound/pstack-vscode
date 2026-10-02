@@ -114,12 +114,12 @@ const rejectedDispatch = (cs) => cs.some((t) => t.t === 'task' && !t.ok);
 
 const agentNames = await run('context', 'Do not run tools. 1) Quote verbatim the sentence in your context that starts with "On GitHub Copilot, skills load". 2) Print the full enum of the agent_type parameter of your task tool, comma separated. 3) Print the number of skills available to you whose name starts with "principle-".', 5 * 60_000);
 check('mandate injected by sessionStart hook', final('context').includes('skills load through the'));
-check('runtime lists no pstack plugin agents', !agentNames.some((n) => n.startsWith('pstack:')));
+check('runtime lists no pstack plugin agents', !agentNames.some((n) => /^pstack(-copilot)?:/.test(n)));
 
 await run('route', 'Explain how main.js gets its output in this repo. Use poteto-mode, and delegate the code reading to one pstack subagent.', 20 * 60_000);
 const route = calls('route');
 check('poteto-mode loaded via skill tool', route.some((c) => c.t === 'skill' && String(c.a.skill).includes('poteto-mode') && c.ok));
-check('no namespaced skill lookups', !route.some((c) => String(c.a.skill ?? '').startsWith('pstack:')));
+check('no namespaced skill lookups', !route.some((c) => /^pstack(-copilot)?:/.test(String(c.a.skill ?? ''))));
 check('a subagent ran and loaded a pstack skill itself', subagentRanPstack(route));
 check('no subagent dispatch was rejected', !rejectedDispatch(route));
 check('no Claude-only tool names called', !route.some((c) => /^(Agent|Skill|Task|AskUserQuestion|TodoWrite)$/.test(c.t)));

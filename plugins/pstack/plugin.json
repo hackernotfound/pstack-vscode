@@ -1,12 +1,14 @@
 {
-  "name": "pstack",
-  "displayName": "pstack (GitHub Copilot port)",
-  "version": "1.1.1",
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "pstack-copilot",
+  "version": "1.2.0",
   "description": "if you want to go fast, go deep first. pstack helps you write less, but higher quality code. rigorous agent workflows you can parallelize with confidence. GitHub Copilot port of pstack-claude 0.9.57. Original pstack by Lauren Tan (poteto); Claude Code port by Michael Denyer.",
   "author": {
     "name": "hackernotfound",
     "url": "https://github.com/hackernotfound"
   },
+  "homepage": "https://github.com/hackernotfound/pstack-vscode",
+  "repository": "https://github.com/hackernotfound/pstack-vscode",
   "license": "MIT",
   "keywords": [
     "pstack",
@@ -16,6 +18,7 @@
     "skills",
     "subagents"
   ],
-  "skills": "./skills/",
-  "hooks": "./hooks/hooks.json"
+  "extensions": {
+    "com.github.copilot": {}
+  }
 }

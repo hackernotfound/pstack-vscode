@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\""
+            "command": "\"${PLUGIN_ROOT}/com.github.copilot/hooks/session-start.sh\""
           }
         ]
       }

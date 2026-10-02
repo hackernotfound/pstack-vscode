@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -9,6 +9,9 @@ const upstream = JSON.parse(readFileSync(join(root, 'upstream.json'), 'utf8'));
 const version = readFileSync(join(root, 'VERSION'), 'utf8').trim();
 if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error(`VERSION must be MAJOR.MINOR.PATCH, got ${JSON.stringify(version)}`);
 const out = join(root, 'plugins/pstack');
+const name = 'pstack-copilot';
+// Agent Plugins 1.0 keeps Copilot-only parts, such as hooks, under this namespace folder.
+const hooks = 'com.github.copilot/hooks';
 
 function fetchSource() {
   const dir = join(root, '.cache', `pstack-claude-${upstream.sha.slice(0, 12)}`);
@@ -37,7 +40,7 @@ const skillNames = () =>
     .filter((d) => d.isDirectory() && existsSync(join(out, 'skills', d.name, 'SKILL.md')))
     .map((d) => d.name);
 
-const removals = ['.codex-plugin', '.claude-plugin', 'hooks/codex-hooks.json', 'agents', 'effort-agents'];
+const removals = ['.codex-plugin', '.claude-plugin', 'hooks/codex-hooks.json', 'hooks/hooks.json', 'hooks/session-start.sh', 'agents', 'effort-agents'];
 
 const edits = [
   {
@@ -103,7 +106,7 @@ function unlinkCrossSkillReferences() {
 function buildMandate() {
   const names = new Set(skillNames());
   let rewrites = 0;
-  const text = read('hooks/session-start-context.md').replace(/pstack:([a-z0-9-]+)/g, (m, name) => {
+  const text = read(`${hooks}/session-start-context.md`).replace(/pstack:([a-z0-9-]+)/g, (m, name) => {
     if (!names.has(name)) return m;
     rewrites++;
     return name;
@@ -113,29 +116,30 @@ function buildMandate() {
     '\nOn GitHub Copilot, skills load through the `skill` tool by bare name, such as `poteto-mode`. This plugin ships no agents; where a skill names a pstack agent, dispatch `general-purpose` as copilot-tools.md says. When a pstack skill names a Claude tool or model, read the pstack plugin\'s `skills/poteto-mode/references/copilot-tools.md`.\n';
   const mandate = text.replace('</EXTREMELY_IMPORTANT>', `${pointer}</EXTREMELY_IMPORTANT>`);
   if (mandate === text) throw new Error('mandate: closing tag not found');
-  write('hooks/session-start-context.md', mandate);
-  write('hooks/session-start-context.json', `${JSON.stringify({ additionalContext: mandate })}\n`);
+  write(`${hooks}/session-start-context.md`, mandate);
+  write(`${hooks}/session-start-context.json`, `${JSON.stringify({ additionalContext: mandate })}\n`);
 }
 
 function writeManifests(source) {
   const claude = JSON.parse(readFileSync(join(source, 'plugins/pstack/.claude-plugin/plugin.json'), 'utf8'));
   const plugin = {
-    name: 'pstack',
-    displayName: 'pstack (GitHub Copilot port)',
+    $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json',
+    name,
     version,
     description: `${claude.description.split(' Ported from')[0]} GitHub Copilot port of pstack-claude ${upstream.version}. Original pstack by Lauren Tan (poteto); Claude Code port by Michael Denyer.`,
     author: { name: 'hackernotfound', url: 'https://github.com/hackernotfound' },
+    homepage: 'https://github.com/hackernotfound/pstack-vscode',
+    repository: 'https://github.com/hackernotfound/pstack-vscode',
     license: 'MIT',
     keywords: ['pstack', 'poteto-mode', 'copilot', 'vscode', 'skills', 'subagents'],
-    skills: './skills/',
-    hooks: './hooks/hooks.json',
+    extensions: { 'com.github.copilot': {} },
   };
   write('plugin.json', `${JSON.stringify(plugin, null, 2)}\n`);
   const marketplace = {
     name: 'pstack-vscode',
     owner: { name: 'hackernotfound', url: 'https://github.com/hackernotfound' },
     description: 'GitHub Copilot port of pstack for Copilot CLI and the VS Code agents window.',
-    plugins: [{ name: 'pstack', source: './plugins/pstack', description: plugin.description, version }],
+    plugins: [{ name, source: './plugins/pstack', description: plugin.description, version }],
   };
   mkdirSync(join(root, '.github/plugin'), { recursive: true });
   writeFileSync(join(root, '.github/plugin/marketplace.json'), `${JSON.stringify(marketplace, null, 2)}\n`);
@@ -154,10 +158,12 @@ const source = fetchSource();
 rmSync(out, { recursive: true, force: true });
 cpSync(join(source, 'plugins/pstack'), out, { recursive: true });
 for (const rel of removals) rmSync(join(out, rel), { recursive: true, force: true });
+mkdirSync(dirname(join(out, hooks)), { recursive: true });
+renameSync(join(out, 'hooks'), join(out, hooks));
 cpSync(join(root, 'overlay'), out, { recursive: true });
 edits.forEach(applyEdit);
 unlinkCrossSkillReferences();
 buildMandate();
 writeManifests(source);
 copyLicenses(source);
-console.log(`built plugins/pstack ${version} from ${upstream.sha.slice(0, 7)}`);
+console.log(`built plugins/pstack (${name}) ${version} from ${upstream.sha.slice(0, 7)}`);

@@ -15,7 +15,7 @@
 `node tools/check.mjs` runs in CI on every push and pull request. It rebuilds the plugin and fails if:
 
 - the rebuilt tree differs from the committed one
-- a manifest, agent, hook, or skill is missing or malformed
+- the manifest is not Agent Plugins 1.0, or an agent, hook, or skill is missing or malformed
 - the startup instructions name a skill with the `pstack:` prefix, or the hook output is not top-level `additionalContext`
 - the plugin contains a symlink, or an executable outside the reviewed list
 - the plugin ships any agent (VS Code's agents window lists every plugin agent twice)

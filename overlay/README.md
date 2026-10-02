@@ -1,4 +1,4 @@
-# pstack (GitHub Copilot port)
+# pstack-copilot (GitHub Copilot port of pstack)
 
 Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/main/pstack) is an opinionated skill stack that improves agent outcomes. This build runs it on GitHub Copilot: the VS Code agents window with the Copilot target, and Copilot CLI. It is generated from Michael Denyer's [pstack-claude](https://github.com/michael-denyer/pstack-claude).
 
