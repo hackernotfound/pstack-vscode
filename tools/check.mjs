@@ -87,6 +87,7 @@ const viaHooksJson = (event, env, input = '') =>
 const copied = (rel) => join(noExec, 'plugin', rel);
 const startNoExec = viaHooksJson('SessionStart', { COPILOT_HOME: emptyHome });
 check('SessionStart command from hooks.json works with every exec bit stripped', startNoExec.status === 0 && JSON.parse(startNoExec.stdout).additionalContext.includes('ships no agents'));
+check('SessionStart names the folder this plugin runs from, so another pstack install cannot stand in for it', JSON.parse(startNoExec.stdout).additionalContext.includes(`pstack-copilot plugin in \`${join(noExec, 'plugin')}\``));
 const viewNoExec = viaHooksJson('PreToolUse', { COPILOT_HOME: emptyHome }, view(copied('skills/tdd/SKILL.md')));
 check('PreToolUse command from hooks.json approves a plugin view with every exec bit stripped', viewNoExec.status === 0 && JSON.parse(viewNoExec.stdout).permissionDecision === 'allow');
 const batch = viaHooksJson('PreToolUse', { COPILOT_HOME: emptyHome }, JSON.stringify({ toolCalls: [{ id: 'x', name: 'view', args: { path: copied('skills/tdd/SKILL.md') } }] }));
