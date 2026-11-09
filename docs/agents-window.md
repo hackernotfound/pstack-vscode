@@ -12,9 +12,13 @@ Open **Preferences: Open User Settings (JSON)** for the settings below.
 
 Click a subagent in that list to open its conversation in a tab.
 
+![Three pstack reviewers run in parallel. Each card shows its label, model, run time, and credits, and the Subagents list shows the three in progress.](images/subagents-running.png)
+
 ## If you want a subagent side by side with the main chat
 
 Click the subagent's card in the chat, the line that shows its name, model, and run time. It opens in a pane next to the main chat. Each card you click adds another pane.
+
+![The main chat's summary on the left, and one reviewer's own chat on the right, with the brief it got and its verdict.](images/subagents-side-by-side.png)
 
 ## If you want chats in tabs
 
