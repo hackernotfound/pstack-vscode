@@ -2,36 +2,37 @@
 
 [![check](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml/badge.svg)](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![version](https://img.shields.io/badge/version-1.3.1-7C3AED.svg)](https://github.com/hackernotfound/pstack-vscode/releases/tag/v1.3.1)
 
+> [!IMPORTANT]
+> **This repo is archived. Use [pstack-claude](https://github.com/michael-denyer/pstack-claude) instead.** Its `main` branch now works in the VS Code agents window ([#435](https://github.com/michael-denyer/pstack-claude/pull/435)), with hooks, routing, and subagents included. This port gets no more updates.
+
 **Run [pstack](https://github.com/cursor/plugins/tree/main/pstack) in the VS Code agents window with GitHub Copilot, subagents included.**
 
 pstack is Lauren Tan's ([poteto](https://x.com/poteto)) set of agent workflows. Give it a goal and it picks the right one: root-cause a bug before fixing it, design before coding, race several attempts and keep the best, or review a diff with more than one model. Then it proves the result works. This port brings all 67 skills to Copilot.
 
 ![Three pstack reviewers run in parallel in the agents window, each with its own label, model, run time, and credits.](docs/images/subagents-running.png)
 
-## Why this port
+## Switch to pstack-claude in VS Code
 
-[pstack-claude](https://github.com/michael-denyer/pstack-claude) by Michael Denyer works on Copilot CLI, and this port builds on it. In the VS Code agents window it breaks:
+1. Clone pstack-claude:
 
-| In the VS Code agents window | pstack-claude 0.9.133 | pstack-copilot 1.3.1 |
-| --- | --- | --- |
-| pstack starts with the session | No, the startup hook fails | Yes |
-| The agent can read files and run commands | No, VS Code skips each tool call | Yes |
-| pstack hands work to subagents | No, VS Code rejects its agent type | Yes, each shown in the chat |
+   ```shell
+   git clone https://github.com/michael-denyer/pstack-claude.git ~/.local/share/pstack-claude-vscode
+   ```
 
-<details>
-<summary><b>See it</b>: the same request in both builds</summary>
+2. In **Preferences: Open User Settings (JSON)**, point VS Code at its plugin and remove `hackernotfound/pstack-vscode` from `chat.plugins.marketplaces`:
 
-**pstack-claude 0.9.133:**
+   ```json
+   "chat.plugins.enabled": true,
+   "chat.pluginLocations": { "/Users/<you>/.local/share/pstack-claude-vscode/plugins/pstack": true }
+   ```
 
-![VS Code error: the pstack preToolUse hook failed with code 126, and 3 tool calls were skipped](docs/images/upstream-hook-error.png)
+   Use the absolute path to your clone. If the agent sandbox is on, keep the sandbox setting from the [agents window guide](docs/agents-window.md#if-you-want-the-agents-commands-sandboxed).
 
-**pstack-copilot:**
+3. Uninstall **pstack-copilot** from the Extensions view (`@agentPlugins`), then run **Developer: Reload Window**.
 
-![pstack-copilot delegates to a background subagent, "Trace main.js output", which completes](docs/images/subagent.png)
+To update later, run `git -C ~/.local/share/pstack-claude-vscode pull`.
 
-Captured on VS Code 1.140.0 with the Copilot target and the auto model.
-
-</details>
+The sections below describe the archived port.
 
 ## Install
 
