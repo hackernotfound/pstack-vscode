@@ -110,7 +110,8 @@ const edits = [
     file: 'skills/poteto-mode/references/copilot-tools.md',
     find: '- Keep the rest of the policy unchanged.',
     replace: [
-      '- VS Code labels each subagent with its `description`, in the chat and in its Subagents pill. Make every `description` in a run unique and lead with the role and a number, such as `Reviewer 1: security` and `Reviewer 2: tests`. Never reuse one `description` for several subagents.',
+      '- VS Code labels each subagent with its `description`: on its card in the chat, in the Subagents pill, and in its pane. A narrow column cuts a label short from the end, so start every `description` with what tells it apart: a number, then a short role, such as `1: security review` and `2: test review`. Keep it to the 3 to 5 words `task` asks for, and never give two subagents in a run the same label or the same first word.',
+      '- Create each writer\'s worktree yourself before you dispatch it, inside the workspace at `.worktrees/<name>`, after you add `.worktrees/` to `.git/info/exclude` so it never shows as a change. Give the writer that absolute path as the only place it may write, and do not also name a path in the workspace root. Copilot subagents refuse to write under a temporary directory such as `/tmp` or `$TMPDIR`, and with the sandbox on, VS Code blocks writes outside the workspace. Use `create_session` only when it is in your tool list.',
       '- Your Copilot plan caps concurrent subagents (Free 2, Pro 4, Max 8, Business 16, Enterprise 32). Size `swarm` and `arena` fan-out to fit, and queue the rest.',
       '- Keep the rest of the policy unchanged.',
     ].join('\n'),
