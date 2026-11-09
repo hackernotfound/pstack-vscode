@@ -59,6 +59,8 @@ Without the sandbox, the first read of a pstack file in a session asks **Allow r
 
 **Want to see your subagents while they run?** Follow the one-time [agents window setup](docs/agents-window.md). It adds a live list of running subagents, side-by-side subagent panes, and chat tabs, close to [T3 Code](https://t3.codes).
 
+![Three pstack reviewers run in parallel in the agents window, each with its own label, model, run time, and credits.](docs/images/subagents-running.png)
+
 ### Copilot CLI
 
 ```shell
