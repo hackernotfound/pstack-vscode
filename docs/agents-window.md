@@ -67,7 +67,7 @@ The sandbox also blocks reads outside your workspace, and pstack keeps its playb
 }
 ```
 
-Replace `/Users/YOU` with your home folder. VS Code does not expand `~` in these paths.
+Replace `/Users/YOU` with your home folder. VS Code does not expand `~` in these paths. If VS Code offers to add all of `~/.copilot` instead, choose **Skip**, because the setting above grants only the one file pstack writes.
 
 ## Everything at once
 

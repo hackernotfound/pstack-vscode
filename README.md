@@ -1,6 +1,6 @@
 # pstack for GitHub Copilot
 
-[![check](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml/badge.svg)](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![version](https://img.shields.io/badge/version-1.3.0-7C3AED.svg)](https://github.com/hackernotfound/pstack-vscode/releases/tag/v1.3.0)
+[![check](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml/badge.svg)](https://github.com/hackernotfound/pstack-vscode/actions/workflows/check.yml) [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![version](https://img.shields.io/badge/version-1.3.1-7C3AED.svg)](https://github.com/hackernotfound/pstack-vscode/releases/tag/v1.3.1)
 
 **Run [pstack](https://github.com/cursor/plugins/tree/main/pstack) in the VS Code agents window with GitHub Copilot, subagents included.**
 
@@ -51,7 +51,7 @@ If you turned on the agent sandbox (`chat.agent.sandbox.enabled`), add this sett
 }
 ```
 
-Replace `/Users/YOU` with your home folder. Use full paths, because VS Code does not expand `~` here. The first path is the folder where VS Code keeps a copy of every agent plugin, and the grant is read-only. The second is the file where pstack saves your model choices. VS Code runs each agent plugin from its own copy in that folder, including a version you pin. On Linux the folder is `agentPlugins` inside VS Code's user data folder, and the first approval prompt shows its full path.
+Replace `/Users/YOU` with your home folder. If VS Code instead offers to add all of `~/.copilot` to your sandbox settings, choose **Skip**. That folder holds your sessions and your installed plugins, and the setting above grants only the one file pstack writes. Use full paths, because VS Code does not expand `~` here. The first path is the folder where VS Code keeps a copy of every agent plugin, and the grant is read-only. The second is the file where pstack saves your model choices. VS Code runs each agent plugin from its own copy in that folder, including a version you pin. On Linux the folder is `agentPlugins` inside VS Code's user data folder, and the first approval prompt shows its full path.
 
 Without the sandbox, the first read of a pstack file in a session asks **Allow reading file outside of workspace?**. Choose **Allow in this Session**.
 

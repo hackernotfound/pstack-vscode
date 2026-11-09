@@ -37,7 +37,8 @@ poteto-mode's Subagents section sets Claude-specific defaults (`subagent_type: "
 - `run_in_background: true` maps to `mode: "background"`. `mode: "sync"` blocks your turn; use it only when the next step needs the result.
 - A model a skill states for a role (its Models section, an `Agent` call's `model`, or the user's sheet line) is an explicit model instruction, so pass it as `task`'s `model`. A role with no configured model omits `model`. See Model names below for how a Claude default resolves.
 - Workers that write share this machine on the CLI, so the **swarm** skill's workers and the fan-out playbooks (`orchestrate`, `autopilot-full`, `autopilot-stack`) isolate writers with worktrees, as on Claude Code. In the Copilot app, `create_session` gives each writer its own worktree session instead; see App and CLI below.
-- VS Code labels each subagent with its `description`, in the chat and in its Subagents pill. Make every `description` in a run unique and lead with the role and a number, such as `Reviewer 1: security` and `Reviewer 2: tests`. Never reuse one `description` for several subagents.
+- VS Code labels each subagent with its `description`: on its card in the chat, in the Subagents pill, and in its pane. A narrow column cuts a label short from the end, so start every `description` with what tells it apart: a number, then a short role, such as `1: security review` and `2: test review`. Keep it to the 3 to 5 words `task` asks for, and never give two subagents in a run the same label or the same first word.
+- When a writer needs its own worktree, create it yourself before you dispatch it, inside the workspace at `.worktrees/<name>`, after you add `.worktrees/` to `.git/info/exclude` so it never shows as a change. Give the writer that absolute path as the only place it may write, and do not also name a path in the workspace root. Copilot subagents refuse to write under a temporary directory such as `/tmp` or `$TMPDIR`, and with the sandbox on, VS Code blocks writes outside the workspace. Dispatch writers with `task`, not `create_session`: a `create_session` worker never reports back to you, so you cannot collect or verify its result, and VS Code shows no model for it. Use `create_session` only when the user asks for separate sessions.
 - Your Copilot plan caps concurrent subagents (Free 2, Pro 4, Max 8, Business 16, Enterprise 32). Size `swarm` and `arena` fan-out to fit, and queue the rest.
 - Keep the rest of the policy unchanged. Pass file pointers not inlined context, give each worker its own worktree or branch when they write, review every subagent's diff yourself.
 
@@ -77,7 +78,7 @@ Every other call, including a script run in any other form and `grep` or `glob` 
 
 ## App and CLI
 
-The Copilot app loads the same plugin as the CLI and adds session-level tools. Use the app primitive when it is present in your tool list; otherwise use the CLI fallback.
+The Copilot app loads the same plugin as the CLI and adds session-level tools. Use the app primitive when it is present in your tool list; otherwise use the CLI fallback. The VS Code agents window also offers some of these tools, such as `create_session`, but it is not the Copilot app: there, follow the Copilot CLI column.
 
 | pstack need | Copilot app | Copilot CLI |
 |-------------|-------------|-------------|
