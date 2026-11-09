@@ -6,7 +6,21 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${PLUGIN_ROOT}/com.github.copilot/hooks/session-start.sh\""
+            "command": "sh \"${PLUGIN_ROOT}/com.github.copilot/hooks/session-start.sh\"",
+            "powershell": "exit 0"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "view|task|bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${PLUGIN_ROOT}/com.github.copilot/hooks/pre-tool-use.sh\"",
+            "timeout": 5,
+            "powershell": "exit 0"
           }
         ]
       }

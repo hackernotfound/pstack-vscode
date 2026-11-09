@@ -1,0 +1,6 @@
+plugins/pstack/** linguist-generated=true
+plugins/pstack/hooks/** -linguist-generated
+plugins/pstack/com.github.copilot/** -linguist-generated
+plugins/pstack/**/scripts/** -linguist-generated
+licenses/** linguist-generated=true
+.github/plugin/marketplace.json linguist-generated=true

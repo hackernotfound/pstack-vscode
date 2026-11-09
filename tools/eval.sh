@@ -38,6 +38,12 @@ subagent_ran_pstack() {
           and ($skills | index([($c.arguments | objects | .skill // "")])) and ($ok | index([$c.toolCallId]))))
   ' "$work/$1.jsonl" > /dev/null
 }
+session_hook_injected() {
+  jq -s -e '
+    any(.[]; .type=="hook.end" and .data.hookType=="sessionStart" and .data.success==true
+      and ((.data.output.additionalContext // "") | contains("ships no agents")))
+  ' "$COPILOT_HOME"/session-state/*/events.jsonl > /dev/null
+}
 rejected_dispatch() {
   jq -s -e '
     (map(select(.type=="tool.execution_complete" and .data.success==false) | .data.toolCallId)) as $bad
@@ -55,9 +61,9 @@ printf 'export function add(a, b) {\n  return a + b;\n}\n' > math.js
 printf 'import { add } from "./math.js";\nconsole.log(add(2, 3));\n' > main.js
 git add -A && git -c user.name=eval -c user.email=eval@local commit -qm init
 
-run context -s -p 'Do not run tools. 1) Quote verbatim the sentence in your context that starts with "On GitHub Copilot, skills load". 2) Print the full enum of the agent_type parameter of your task tool, comma separated. 3) Print the number of skills available to you whose name starts with "principle-".'
-check "mandate injected by sessionStart hook" 'final context | grep -q "skills load through the"'
-check "task offers no pstack plugin agents" '! final context | grep -Eq "pstack(-copilot)?:"'
+run context -s -p 'Do not run tools. Print the full enum of the agent_type parameter of your task tool, comma separated.'
+check "sessionStart hook injected the mandate (hook record in session state)" 'session_hook_injected'
+check "task offers no pstack plugin agents" 'final context | grep -q general-purpose && ! final context | grep -Eq "pstack(-copilot)?:"'
 
 run route -p 'Explain how main.js gets its output in this repo. Use poteto-mode, and delegate the code reading to one pstack subagent.'
 check "poteto-mode loaded via skill tool" 'poteto_mode_loaded route'

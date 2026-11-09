@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "pstack-copilot",
-  "version": "1.2.0",
-  "description": "if you want to go fast, go deep first. pstack helps you write less, but higher quality code. rigorous agent workflows you can parallelize with confidence. GitHub Copilot port of pstack-claude 0.9.57. Original pstack by Lauren Tan (poteto); Claude Code port by Michael Denyer.",
+  "version": "1.3.0",
+  "description": "If you want to go fast, go deep first. pstack helps you write less, but higher quality code. rigorous agent workflows you can parallelize with confidence. GitHub Copilot port of pstack-claude 0.9.133. Original pstack by Lauren Tan (poteto); Claude Code port by Michael Denyer.",
   "author": {
     "name": "hackernotfound",
     "url": "https://github.com/hackernotfound"
