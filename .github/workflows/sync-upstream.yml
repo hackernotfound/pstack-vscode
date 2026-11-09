@@ -1,0 +1,88 @@
+name: sync upstream
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      release: ${{ steps.plan.outputs.release }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.21.0
+      - id: plan
+        run: |
+          release=$(node tools/sync-upstream.mjs plan)
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+      # check.mjs runs upstream's hook scripts, so it runs here, where the token can only read.
+      - if: steps.plan.outputs.release != ''
+        env:
+          RELEASE: ${{ steps.plan.outputs.release }}
+        run: |
+          node tools/sync-upstream.mjs apply "${RELEASE%% *}" "${RELEASE##* }"
+          git add -A
+          git -c user.name=sync -c user.email=sync@localhost commit -qm sync
+          node tools/check.mjs
+
+  propose:
+    needs: verify
+    if: needs.verify.outputs.release != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.21.0
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE: ${{ needs.verify.outputs.release }}
+        run: |
+          version=${RELEASE%% *}
+          branch="sync/pstack-claude-$version"
+          title="pstack-claude $version is available"
+          if [ -z "$(git ls-remote --heads origin "$branch")" ]; then
+            git switch -c "$branch"
+            node tools/sync-upstream.mjs apply "$version" "${RELEASE##* }"
+            git add -A
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -qm "feat: sync pstack-claude $version"
+            gh auth setup-git
+            git push -q origin "$branch"
+          fi
+          if [ -z "$(gh issue list --state all --search "\"$title\" in:title" --json number --jq '.[].number')" ]; then
+            git fetch -q origin "$branch"
+            next=$(git show "FETCH_HEAD:VERSION")
+            url="https://github.com/$GITHUB_REPOSITORY/compare/main...$branch?expand=1&title=feat:%20sync%20pstack-claude%20$version"
+            printf '%s\n' \
+              "A sync branch for pstack-claude $version is ready. The static checks passed on it. They run upstream's hook scripts, so they are not a review." "" \
+              "1. Review the upstream changes that run on users' machines first: \`git fetch origin $branch && git diff main...origin/$branch -- plugins/pstack/hooks 'plugins/pstack/**/scripts'\`." \
+              "2. Then run the live checks locally: \`git switch $branch && tools/eval.sh && node tools/eval-vscode.mjs\`." \
+              "3. Open the pull request: $url" \
+              "4. After merging, tag the release \`v$next\`." > body.md
+            gh issue create --title "$title" --body-file body.md
+          fi

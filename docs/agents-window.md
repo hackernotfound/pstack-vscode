@@ -54,6 +54,17 @@ This hides the **External** section, which lists sessions started outside the ag
 
 A shield appears next to the permissions picker. Ordinary commands, such as reading files or listing folders, keep working.
 
+The sandbox also blocks reads outside your workspace, and pstack keeps its playbooks inside the plugin. Grant those reads once, and let pstack save your model choices:
+
+```json
+"chat.agent.sandbox.fileSystem.userConfiguredPaths": {
+  "readonlyPaths": ["/Users/YOU/Library/Application Support/Code/agentPlugins"],
+  "readwritePaths": ["/Users/YOU/.copilot/pstack-models.md"]
+}
+```
+
+Replace `/Users/YOU` with your home folder. VS Code does not expand `~` in these paths.
+
 ## Everything at once
 
 ```json
@@ -61,7 +72,11 @@ A shield appears next to the permissions picker. Ordinary commands, such as read
 "chat.subagents.showCreditUsage": true,
 "chat.subagents.allowInvocationsFromSubagents": true,
 "chat.agentSessions.showExternal": "none",
-"chat.agent.sandbox.enabled": "on"
+"chat.agent.sandbox.enabled": "on",
+"chat.agent.sandbox.fileSystem.userConfiguredPaths": {
+  "readonlyPaths": ["/Users/YOU/Library/Application Support/Code/agentPlugins"],
+  "readwritePaths": ["/Users/YOU/.copilot/pstack-models.md"]
+}
 ```
 
 Then turn on the Subagents pill as described above. That last step lives in VS Code's interface, not in settings.

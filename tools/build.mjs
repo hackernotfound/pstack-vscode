@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { cpSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -10,8 +10,7 @@ const version = readFileSync(join(root, 'VERSION'), 'utf8').trim();
 if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error(`VERSION must be MAJOR.MINOR.PATCH, got ${JSON.stringify(version)}`);
 const out = join(root, 'plugins/pstack');
 const name = 'pstack-copilot';
-// Agent Plugins 1.0 keeps Copilot-only parts, such as hooks, under this namespace folder.
-const hooks = 'com.github.copilot/hooks';
+const hooks = 'hooks';
 
 function fetchSource() {
   const dir = join(root, '.cache', `pstack-claude-${upstream.sha.slice(0, 12)}`);
@@ -40,25 +39,125 @@ const skillNames = () =>
     .filter((d) => d.isDirectory() && existsSync(join(out, 'skills', d.name, 'SKILL.md')))
     .map((d) => d.name);
 
-const removals = ['.codex-plugin', '.claude-plugin', 'hooks/codex-hooks.json', 'hooks/hooks.json', 'hooks/session-start.sh', 'agents', 'effort-agents'];
+const removals = [
+  '.antigravity-plugin',
+  '.claude-plugin',
+  '.codex-plugin',
+  '.github',
+  '.grok-plugin',
+  '.muse-plugin',
+  'agents',
+  'grok',
+  'hooks.json',
+  'omp',
+  'opencode',
+  'package.json',
+  'pi',
+  ...[
+    'agy-context.awk',
+    'codex-hooks.json',
+    'copilot-hooks.json',
+    'hooks.json',
+    'kimi-instructions.md',
+    'muse-context.awk',
+    'session-start-agy.md',
+    'session-start-minimax.md',
+    'session-start-muse-sheet.md',
+    'session-start-muse.md',
+    'session-start-opencode.md',
+    'session-start.ps1',
+  ].map((f) => `hooks/${f}`),
+];
+
+const agentReferences = ['thermo-nuclear-review-subagent', 'thermo-nuclear-code-quality-review-subagent'];
 
 const edits = [
   {
     file: 'skills/poteto-mode/SKILL.md',
-    find: 'On Codex, read [`references/codex-tools.md`](references/codex-tools.md) for the Codex equivalent of a Claude tool, model, or skill named by these workflows.',
+    find: 'On GitHub Copilot, read [`references/copilot-tools.md`](references/copilot-tools.md) instead.',
     replace:
-      'On GitHub Copilot (Copilot CLI, or the VS Code agents window with the Copilot target), read [`references/copilot-tools.md`](references/copilot-tools.md) for the Copilot equivalent of a Claude tool, model, or skill named by these workflows. On Codex, read [`references/codex-tools.md`](references/codex-tools.md) for the Codex equivalent.',
+      'On GitHub Copilot (Copilot CLI, or the VS Code agents window with the Copilot target), read [`references/copilot-tools.md`](references/copilot-tools.md) instead.',
   },
   {
-    file: 'skills/setup-pstack/SKILL.md',
-    find: '| hook contract tested; discovery verified |\n',
-    replace:
-      '| hook contract tested; discovery verified |\n| GitHub Copilot | `<copilot-home>/pstack-models.md`, where `<copilot-home>` is `$COPILOT_HOME` or `~/.copilot` | model rows: paste into `<copilot-home>/copilot-instructions.md`; hook setting: read by the plugin | slugs the runtime accepts for `task`\'s `model`, see [copilot-tools.md](../poteto-mode/references/copilot-tools.md#model-names) | hook contract and dispatch verified on Copilot CLI |\n',
+    file: 'skills/poteto-mode/references/copilot-tools.md',
+    find: 'It covers both the Copilot CLI and the Copilot app, which load the same plugin.',
+    replace: 'It covers the Copilot CLI, the Copilot app, and the VS Code agents window with the Copilot target, which load the same plugin.',
   },
   {
-    file: 'skills/setup-pstack/SKILL.md',
-    find: 'The `session hook` line applies to the Claude Code and Codex plugins.',
-    replace: 'The `session hook` line applies to the Claude Code, Codex, and GitHub Copilot plugins.',
+    file: 'skills/poteto-mode/references/copilot-tools.md',
+    find: /- The plugin's agents load as `task` agent types[^\n]*\n- `subagent_type: "general-purpose"`[^\n]*\n/,
+    replace: [
+      "- This build ships no plugin agents. VS Code's Copilot runtime rejects a `task` dispatch to a plugin agent (`Unknown agent_type: pstack:poteto-agent`). Use Copilot's built-ins as `task`'s `agent_type` (`explore`, `general-purpose`, `code-review`, `research`, `rubber-duck`, `security-review`, `task`).",
+      '- Where a skill names a pstack agent, dispatch `general-purpose` and begin the prompt as follows:',
+      '  - For `pstack:poteto-agent`: "Before any work, load the `poteto-mode` skill with the `skill` tool and follow it, including its Principles section."',
+      '  - For `pstack:comment-sicko`, `pstack:thermo-nuclear-review-subagent`, and `pstack:thermo-nuclear-code-quality-review-subagent`: "Before any work, read `skills/poteto-mode/references/agents/<name>.md` in the pstack plugin in full and act as that agent." Use the agent\'s name without the `pstack:` prefix for `<name>`. The plugin root is two directories above poteto-mode\'s `SKILL.md`.',
+      '- `subagent_type: "general-purpose"` maps to `agent_type: "general-purpose"`. Where a skill leaves the type unset, dispatch `general-purpose` with the `pstack:poteto-agent` opening.',
+      '',
+    ].join('\n'),
+  },
+  {
+    file: 'skills/poteto-mode/references/copilot-tools.md',
+    find: '`readonly: true` (reviewers, explorers, critics) maps to a read-only agent type:',
+    replace:
+      '`readonly: true` (reviewers, explorers, critics) maps to a read-only agent type. When the skill names a pstack agent for the role, use `general-purpose` with a prompt that forbids edits instead, because the opening above needs the `skill` tool or file reads a read-only agent may not make. Otherwise the read-only types are',
+  },
+  {
+    file: 'skills/poteto-mode/references/copilot-tools.md',
+    find: '`readonly: false`, or a role that needs MCP tools, maps to `general-purpose` or `pstack:poteto-agent`.',
+    replace: '`readonly: false`, or a role that needs MCP tools, maps to `general-purpose`.',
+  },
+  {
+    file: 'skills/poteto-mode/references/copilot-tools.md',
+    find: '- Keep the rest of the policy unchanged.',
+    replace: [
+      '- VS Code labels each subagent with its `description`, in the chat and in its Subagents pill. Make every `description` in a run unique and lead with the role and a number, such as `Reviewer 1: security` and `Reviewer 2: tests`. Never reuse one `description` for several subagents.',
+      '- Your Copilot plan caps concurrent subagents (Free 2, Pro 4, Max 8, Business 16, Enterprise 32). Size `swarm` and `arena` fan-out to fit, and queue the rest.',
+      '- Keep the rest of the policy unchanged.',
+    ].join('\n'),
+  },
+  {
+    file: 'skills/poteto-mode/references/copilot-tools.md',
+    find: '| `no-comments` | Dispatch `task` with `agent_type: "pstack:comment-sicko"`. |',
+    replace: '| `no-comments` | Dispatch `task` with `agent_type: "general-purpose"` and the `comment-sicko` opening from Subagent policy above. |',
+  },
+  {
+    file: 'skills/poteto-mode/references/copilot-tools.md',
+    find: /\| `thermos` \| Dispatch two `task` calls with `mode: "background"`, `agent_type: "pstack:thermo-nuclear-review-subagent"` and `agent_type: "pstack:thermo-nuclear-code-quality-review-subagent"`, each with/,
+    replace:
+      '| `thermos` | Dispatch two `task` calls with `mode: "background"` and `agent_type: "general-purpose"`, one with the `thermo-nuclear-review-subagent` opening and one with the `thermo-nuclear-code-quality-review-subagent` opening from Subagent policy above, each with',
+  },
+  {
+    file: 'skills/poteto-mode/references/copilot-tools.md',
+    find: "- The plugin's `PreToolUse` hook enforces this for pstack agents. While the sheet is valid, it denies a `task` call whose `agent_type` starts with `pstack:` and whose `model` is not one of the sheet's values, and its reason lists the saved IDs. Retry with the role's saved model; never retry on another unsaved model. It leaves calls with no `model` and other agent types alone.",
+    replace:
+      "- The plugin's `PreToolUse` hook denies a `task` call that names a `pstack:` agent type with a `model` the sheet does not list. This build ships no pstack agents, so never dispatch a `pstack:` type, even when that denial asks you to retry. Pass the role's saved model as `model` yourself, and never use a model the sheet does not list.",
+  },
+  {
+    file: 'skills/poteto-mode/references/copilot-tools.md',
+    find: 'The plugin\'s `PreToolUse` hook approves two kinds of call.',
+    replace:
+      "The plugin's `PreToolUse` hook approves two kinds of call on the Copilot CLI. The VS Code agents window sends the hook a different input shape, so the hook approves nothing there, and each read of a plugin file outside the workspace asks for approval. In VS Code, read plugin files one call at a time. When several of those reads wait for approval at once, VS Code can deny all but one and end the turn.",
+  },
+  {
+    file: 'skills/poteto-mode/references/copilot-tools.md',
+    find: ' The mandate names skills as `pstack:<skill>`; on Copilot load them by bare name.',
+    replace: ' This build rewrites the mandate to name skills by their bare names.',
+  },
+  {
+    file: 'hooks/session-start-copilot.md',
+    find: "the plugin's agents keep the prefix (`pstack:poteto-agent`, `pstack:comment-sicko`)",
+    replace:
+      'this build ships no agents, so where a skill names a pstack agent (`pstack:poteto-agent`, `pstack:comment-sicko`), dispatch `general-purpose` as `references/copilot-tools.md` says',
+  },
+  {
+    file: 'skills/poteto-mode/references/copilot-tools.md',
+    find: '`${COPILOT_HOME:-~/.copilot}/installed-plugins/<marketplace>/pstack`',
+    replace: '`${COPILOT_HOME:-~/.copilot}/installed-plugins/<marketplace>/<plugin>`',
+  },
+  {
+    file: 'skills/setup-pstack/copilot.md',
+    find: 'The plugin hook approves the check without a prompt.',
+    replace: 'On the Copilot CLI, the plugin hook approves the check without a prompt. In the VS Code agents window, approve it once.',
   },
   {
     file: 'skills/poteto-mode/scripts/package.json',
@@ -70,37 +169,13 @@ const edits = [
     find: '"bun-types": "latest",\n        "typescript": "latest",',
     replace: '"bun-types": "1.3.14",\n        "typescript": "7.0.2",',
   },
-  {
-    file: 'skills/setup-pstack/SKILL.md',
-    find: 'On Claude Code and Codex, the plugin\'s `SessionStart` hook',
-    replace: 'On Claude Code, Codex, and GitHub Copilot, the plugin\'s `SessionStart` hook',
-  },
 ];
 
 function applyEdit({ file, find, replace }) {
   const text = read(file);
-  const count = text.split(find).length - 1;
-  if (count !== 1) throw new Error(`${file}: expected 1 match, found ${count} for ${JSON.stringify(find.slice(0, 60))}`);
+  const count = typeof find === 'string' ? text.split(find).length - 1 : (text.match(new RegExp(find, 'g')) ?? []).length;
+  if (count !== 1) throw new Error(`${file}: expected 1 match, found ${count} for ${JSON.stringify(String(find).slice(0, 60))}`);
   write(file, text.replace(find, () => replace));
-}
-
-function unlinkCrossSkillReferences() {
-  const skillsRoot = join(out, 'skills');
-  const link = /\[([^\]]+)\]\(((?:\.\.\/)+)([a-z0-9-]+)\/([^)#\s]*)(#[^)\s]*)?\)/g;
-  let rewrites = 0;
-  for (const rel of readdirSync(skillsRoot, { recursive: true })) {
-    if (!rel.endsWith('.md')) continue;
-    const file = join(skillsRoot, rel);
-    const text = readFileSync(file, 'utf8');
-    const next = text.replace(link, (match, label, ups, skill, rest) => {
-      const target = resolve(dirname(file), ups, skill, rest);
-      if (!target.startsWith(`${skillsRoot}/`) || target.startsWith(`${join(skillsRoot, rel.split('/')[0])}/`)) return match;
-      rewrites++;
-      return `${label} (see \`${relative(out, target)}\` in this plugin)`;
-    });
-    if (next !== text) writeFileSync(file, next);
-  }
-  if (rewrites === 0) throw new Error('cross-skill links: none rewritten; upstream link style changed');
 }
 
 function buildMandate() {
@@ -112,12 +187,16 @@ function buildMandate() {
     return name;
   });
   if (rewrites === 0) throw new Error('mandate: no pstack:<skill> references rewritten; upstream text changed');
-  const pointer =
-    '\nOn GitHub Copilot, skills load through the `skill` tool by bare name, such as `poteto-mode`. This plugin ships no agents; where a skill names a pstack agent, dispatch `general-purpose` as copilot-tools.md says. When a pstack skill names a Claude tool or model, read the pstack plugin\'s `skills/poteto-mode/references/copilot-tools.md`.\n';
-  const mandate = text.replace('</EXTREMELY_IMPORTANT>', `${pointer}</EXTREMELY_IMPORTANT>`);
-  if (mandate === text) throw new Error('mandate: closing tag not found');
-  write(`${hooks}/session-start-context.md`, mandate);
-  write(`${hooks}/session-start-context.json`, `${JSON.stringify({ additionalContext: mandate })}\n`);
+  write(`${hooks}/session-start-context.md`, text);
+}
+
+function copyAgentReferences(source) {
+  for (const agent of agentReferences) {
+    const from = join(source, 'plugins/pstack/agents', `${agent}.md`);
+    if (!existsSync(from)) throw new Error(`agent reference: ${from} is missing; upstream moved it`);
+    mkdirSync(join(out, 'skills/poteto-mode/references/agents'), { recursive: true });
+    cpSync(from, join(out, 'skills/poteto-mode/references/agents', `${agent}.md`));
+  }
 }
 
 function writeManifests(source) {
@@ -149,20 +228,32 @@ function copyLicenses(source) {
   const dir = join(root, 'licenses');
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir);
-  for (const f of ['LICENSE', 'LICENSE-cursor-team-kit', 'NOTICE.md', 'NOTICE-skills.md']) {
+  for (const f of ['LICENSE', 'LICENSE-cursor-team-kit', 'LICENSE-thermos', 'NOTICE.md', 'NOTICE-skills.md']) {
     cpSync(join(source, f), join(dir, f));
+  }
+  const blob = `${upstream.repo.replace(/\.git$/, '')}/blob/${upstream.sha}`;
+  for (const f of readdirSync(dir).filter((name) => name.endsWith('.md'))) {
+    const text = readFileSync(join(dir, f), 'utf8');
+    const next = text.replace(/\]\(([^)#\s:]+)(#[^)\s]*)?\)/g, (match, target, anchor = '') =>
+      existsSync(join(dir, target)) ? match : `](${blob}/${target}${anchor})`,
+    );
+    if (next !== text) writeFileSync(join(dir, f), next);
   }
 }
 
 const source = fetchSource();
+for (const rel of readdirSync(join(source, 'plugins/pstack'), { recursive: true })) {
+  if (lstatSync(join(source, 'plugins/pstack', rel)).isSymbolicLink()) throw new Error(`upstream ships a symlink: ${rel}`);
+}
 rmSync(out, { recursive: true, force: true });
 cpSync(join(source, 'plugins/pstack'), out, { recursive: true });
+copyAgentReferences(source);
 for (const rel of removals) rmSync(join(out, rel), { recursive: true, force: true });
-mkdirSync(dirname(join(out, hooks)), { recursive: true });
-renameSync(join(out, 'hooks'), join(out, hooks));
+for (const rel of readdirSync(out, { recursive: true })) {
+  if (/(^|\/)scripts\/test$/.test(rel) || /\.test(-helper)?\.[cm]?[jt]s$/.test(rel)) rmSync(join(out, rel), { recursive: true, force: true });
+}
 cpSync(join(root, 'overlay'), out, { recursive: true });
 edits.forEach(applyEdit);
-unlinkCrossSkillReferences();
 buildMandate();
 writeManifests(source);
 copyLicenses(source);

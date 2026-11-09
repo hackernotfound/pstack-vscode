@@ -112,8 +112,11 @@ const pstackSkills = new Set(readdirSync(join(plugin, 'skills')));
 const subagentRanPstack = (cs) => cs.some((t) => t.t === 'task' && t.ok && cs.some((c) => c.parent === t.id && c.t === 'skill' && pstackSkills.has(String(c.a.skill)) && c.ok));
 const rejectedDispatch = (cs) => cs.some((t) => t.t === 'task' && !t.ok);
 
-const agentNames = await run('context', 'Do not run tools. 1) Quote verbatim the sentence in your context that starts with "On GitHub Copilot, skills load". 2) Print the full enum of the agent_type parameter of your task tool, comma separated. 3) Print the number of skills available to you whose name starts with "principle-".', 5 * 60_000);
-check('mandate injected by sessionStart hook', final('context').includes('skills load through the'));
+const agentNames = await run('context', 'Do not run tools. Print the full enum of the agent_type parameter of your task tool, comma separated.', 5 * 60_000);
+check(
+  'sessionStart hook injected the mandate (hook.end record)',
+  events.context.some((e) => e.type === 'hook.end' && e.data.hookType === 'sessionStart' && e.data.success === true && String(e.data.output?.additionalContext ?? '').includes('ships no agents')),
+);
 check('runtime lists no pstack plugin agents', !agentNames.some((n) => /^pstack(-copilot)?:/.test(n)));
 
 await run('route', 'Explain how main.js gets its output in this repo. Use poteto-mode, and delegate the code reading to one pstack subagent.', 20 * 60_000);
